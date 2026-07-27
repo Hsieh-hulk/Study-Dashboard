@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>學習資料管理 Dashboard | Happy Hues & iPad 11" Edition</title>
-  <meta name="description" content="Happy Hues 繽紛風格與 iPad 11" 平板專屬優化 - 自訂學習資料與複習連結管理系統。">
+  <title>學習資料管理 Dashboard | Happy Hues Edition</title>
+  <meta name="description" content="Happy Hues 繽紛風格 - 自訂學習資料與複習連結管理系統。">
   
   <!-- Google Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -236,33 +236,6 @@
       min-width: 44px;
     }
 
-    /* iPad Simulator Frame Styling */
-    .ipad-frame-container {
-      max-width: 100%;
-      margin: 0 auto;
-      transition: all 0.4s ease;
-    }
-
-    .ipad-frame-container.active-ipad-portrait {
-      width: 834px;
-      min-height: 1194px;
-      border: 16px solid #1e293b;
-      border-radius: 36px;
-      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.4), 0 0 0 4px #0f172a;
-      padding: 16px;
-      background: var(--hh-bg);
-    }
-
-    .ipad-frame-container.active-ipad-landscape {
-      width: 1194px;
-      min-height: 834px;
-      border: 16px solid #1e293b;
-      border-radius: 36px;
-      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.4), 0 0 0 4px #0f172a;
-      padding: 20px;
-      background: var(--hh-bg);
-    }
-
     /* Keyframe Animations */
     @keyframes popIn {
       0% { transform: scale(0.96); opacity: 0; }
@@ -289,10 +262,10 @@
         <h1 class="text-lg lg:text-xl font-black tracking-tight hh-headline flex items-center gap-2">
           <span>Study Dashboard</span>
           <span class="px-2 py-0.5 text-[10px] font-black rounded-md bg-[var(--hh-accent-blush)] text-[var(--hh-card-border)] border border-[var(--hh-card-border)] uppercase tracking-wider">
-            Happy Hues 11"
+            Happy Hues
           </span>
         </h1>
-        <p class="text-xs font-semibold text-[var(--hh-paragraph)] opacity-85">自訂學習資料管理與 11" iPad 平板優化</p>
+        <p class="text-xs font-semibold text-[var(--hh-paragraph)] opacity-85">自訂學習資料管理系統</p>
       </div>
     </div>
 
@@ -309,12 +282,6 @@
           <option value="midnight">⚡ 夜間霓虹 (極致暗色)</option>
         </select>
       </div>
-
-      <!-- iPad 11" Simulator Toggle Button -->
-      <button id="btnToggleIpadSim" class="hh-btn-secondary px-3 py-2 text-xs font-bold flex items-center gap-1.5" title="切換 11 吋 iPad 實機模擬視角">
-        <i data-lucide="tablet" class="w-4 h-4 text-indigo-500"></i>
-        <span id="ipadSimBtnText" class="hidden md:inline">11" iPad 視角: 預設</span>
-      </button>
 
       <!-- Backup Export / Import / Reset -->
       <div class="flex items-center gap-1.5">
@@ -337,25 +304,6 @@
     </div>
   </header>
 
-  <!-- iPad Frame Simulator Controls Bar (Shown only in iPad Sim Mode) -->
-  <div id="ipadSimControlsBar" class="hidden bg-[var(--hh-accent-ice)] border-b-2 border-[var(--hh-card-border)] px-4 py-2 text-xs font-bold text-center flex items-center justify-center gap-4 animate-pop-in">
-    <div class="flex items-center gap-2 hh-headline">
-      <i data-lucide="tablet-smartphone" class="w-4 h-4"></i>
-      <span>11 吋 iPad (Pro / Air) 實機視角模擬中</span>
-    </div>
-    <div class="flex items-center gap-2">
-      <button id="btnIpadPortrait" class="px-3 py-1 rounded-lg border-2 border-[var(--hh-card-border)] text-[11px] bg-white font-black shadow-sm">
-        📱 直立 (834 × 1194)
-      </button>
-      <button id="btnIpadLandscape" class="px-3 py-1 rounded-lg border-2 border-[var(--hh-card-border)] text-[11px] bg-white font-black opacity-60">
-        💻 橫向 (1194 × 834)
-      </button>
-      <button id="btnCloseIpadSim" class="px-2 py-1 rounded-lg bg-rose-500 text-white font-black text-[11px] ml-2">
-        關閉模擬
-      </button>
-    </div>
-  </div>
-
   <!-- iPad Portrait Mobile Segmented Tab Switcher (Visible on iPad Portrait / Small Screen) -->
   <div class="lg:hidden max-w-7xl w-full mx-auto px-4 pt-4">
     <div class="grid grid-cols-2 gap-2 p-1.5 rounded-xl border-2 border-[var(--hh-card-border)] bg-[var(--hh-card)] shadow-sm">
@@ -370,9 +318,8 @@
     </div>
   </div>
 
-  <!-- Main iPad Frame Outer Container -->
+  <!-- Main Outer Container -->
   <div class="flex-1 py-4 lg:py-6 px-2 sm:px-4">
-    <div id="ipadFrameContainer" class="ipad-frame-container">
       
       <!-- Main Content Grid -->
       <main class="w-full max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-5 lg:gap-6">
@@ -473,7 +420,6 @@
 
       </main>
 
-    </div>
   </div>
 
   <!-- Reusable Custom Modal -->
@@ -575,9 +521,6 @@
       activeSubjectId: null,
       activeRangeId: null
     };
-
-    // iPad Simulator State
-    let ipadSimMode = 'default'; // 'default', 'portrait', 'landscape'
 
     // Mobile/iPad Tab State ('nav' or 'links')
     let currentMobileTab = 'nav';
@@ -1261,48 +1204,6 @@
       });
     }
 
-    // --- iPad 11" Simulator Logic ---
-
-    function setIpadSimMode(mode) {
-      ipadSimMode = mode;
-      const frame = document.getElementById('ipadFrameContainer');
-      const controls = document.getElementById('ipadSimControlsBar');
-      const btnText = document.getElementById('ipadSimBtnText');
-      const btnPortrait = document.getElementById('btnIpadPortrait');
-      const btnLandscape = document.getElementById('btnIpadLandscape');
-
-      frame.classList.remove('active-ipad-portrait', 'active-ipad-landscape');
-
-      if (mode === 'portrait') {
-        frame.classList.add('active-ipad-portrait');
-        controls.classList.remove('hidden');
-        btnText.textContent = '11" iPad: 直立 (834px)';
-        btnPortrait.classList.remove('opacity-60');
-        btnLandscape.classList.add('opacity-60');
-      } else if (mode === 'landscape') {
-        frame.classList.add('active-ipad-landscape');
-        controls.classList.remove('hidden');
-        btnText.textContent = '11" iPad: 橫向 (1194px)';
-        btnLandscape.classList.remove('opacity-60');
-        btnPortrait.classList.add('opacity-60');
-      } else {
-        controls.classList.add('hidden');
-        btnText.textContent = '11" iPad 視角: 預設';
-      }
-
-      updateMobileTabsVisibility();
-    }
-
-    function toggleIpadSim() {
-      if (ipadSimMode === 'default') {
-        setIpadSimMode('portrait');
-      } else if (ipadSimMode === 'portrait') {
-        setIpadSimMode('landscape');
-      } else {
-        setIpadSimMode('default');
-      }
-    }
-
     // --- Mobile / iPad Portrait Navigation Tabs ---
 
     function setMobileTab(tabName) {
@@ -1316,16 +1217,16 @@
       const navWrapper = document.getElementById('navColumnsWrapper');
       const linksWrapper = document.getElementById('linksColumnWrapper');
 
-      const isCompactView = (window.innerWidth <= 1024) || (ipadSimMode === 'portrait');
+      const isCompactView = (window.innerWidth <= 1024);
 
       if (!isCompactView) {
-        // Desktop / iPad Landscape View: Show everything side by side
+        // Desktop / Wide View: Show everything side by side
         navWrapper.classList.remove('hidden');
         linksWrapper.classList.remove('hidden');
         return;
       }
 
-      // Compact iPad Portrait View Mode
+      // Compact View Mode
       if (currentMobileTab === 'nav') {
         navWrapper.classList.remove('hidden');
         linksWrapper.classList.add('hidden');
@@ -1366,12 +1267,6 @@
         const label = themeNamesMap[val] || val;
         showToast(`已切換為：${label}`, 'info');
       });
-
-      // iPad Sim Event Controls
-      document.getElementById('btnToggleIpadSim').addEventListener('click', toggleIpadSim);
-      document.getElementById('btnIpadPortrait').addEventListener('click', () => setIpadSimMode('portrait'));
-      document.getElementById('btnIpadLandscape').addEventListener('click', () => setIpadSimMode('landscape'));
-      document.getElementById('btnCloseIpadSim').addEventListener('click', () => setIpadSimMode('default'));
 
       // iPad Portrait Tabs Event Controls
       document.getElementById('tabBtnNav').addEventListener('click', () => setMobileTab('nav'));
