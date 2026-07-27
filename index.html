@@ -245,6 +245,16 @@
     .animate-pop-in {
       animation: popIn 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
     }
+
+    @keyframes pulseHighlight {
+      0% { box-shadow: 0 0 0 4px rgba(255, 216, 3, 0.9), 4px 4px 0px 0px var(--hh-shadow); transform: scale(1.02); }
+      50% { box-shadow: 0 0 0 8px rgba(255, 216, 3, 0.6), 6px 6px 0px 0px var(--hh-shadow); transform: scale(1.03); }
+      100% { box-shadow: 4px 4px 0px 0px var(--hh-shadow); transform: scale(1); }
+    }
+
+    .animate-pulse-highlight {
+      animation: pulseHighlight 1.2s ease-in-out forwards;
+    }
   </style>
 </head>
 
@@ -267,6 +277,19 @@
         </h1>
         <p class="text-xs font-semibold text-[var(--hh-paragraph)] opacity-85">自訂學習資料管理系統</p>
       </div>
+    </div>
+
+    <!-- Central Search Icon & Trigger Button -->
+    <div class="flex-1 max-w-md mx-auto order-last md:order-none w-full md:w-auto flex justify-center">
+      <button id="btnOpenSearch" class="w-full max-w-xs sm:max-w-sm hh-btn-secondary px-3.5 py-2 text-xs font-bold flex items-center justify-between gap-2 shadow-sm transition hover:scale-[1.02] active:scale-[0.98]" title="搜尋學習科目、單元與連結 (Ctrl + K)">
+        <div class="flex items-center gap-2 text-[var(--hh-paragraph)] opacity-80 overflow-hidden">
+          <i data-lucide="search" class="w-4 h-4 text-[var(--hh-headline)] shrink-0"></i>
+          <span class="truncate">搜尋科目、單元與連結...</span>
+        </div>
+        <kbd class="hidden sm:inline-flex items-center gap-0.5 px-2 py-0.5 text-[10px] font-mono font-bold rounded-md bg-[var(--hh-accent-ice)] text-[var(--hh-headline)] border border-[var(--hh-card-border)] shadow-xs shrink-0">
+          <span>Ctrl</span><span>K</span>
+        </kbd>
+      </button>
     </div>
 
     <!-- Controls & Actions -->
@@ -420,6 +443,43 @@
 
       </main>
 
+  </div>
+
+  <!-- Search Modal Overlay -->
+  <div id="searchModalOverlay" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-start justify-center pt-12 sm:pt-20 p-4 opacity-0 pointer-events-none transition-opacity duration-200">
+    <div id="searchModalContent" class="hh-card w-full max-w-xl bg-[var(--hh-card)] p-4 sm:p-6 shadow-2xl transform scale-95 transition-transform duration-200 flex flex-col max-h-[80vh]">
+      
+      <!-- Search Input Box Header -->
+      <div class="relative flex items-center mb-4">
+        <i data-lucide="search" class="w-5 h-5 absolute left-3.5 text-[var(--hh-headline)] pointer-events-none"></i>
+        <input 
+          type="text" 
+          id="searchInput" 
+          placeholder="搜尋學習科目、單元範圍或連結名稱..." 
+          class="w-full pl-11 pr-10 py-3 text-sm font-bold hh-input rounded-xl border-2"
+          autocomplete="off"
+        >
+        <button id="btnClearSearch" class="absolute right-3 p-1 rounded-lg hover:bg-[var(--hh-accent-ice)] text-[var(--hh-paragraph)] hidden transition" title="清除關鍵字">
+          <i data-lucide="x" class="w-4 h-4"></i>
+        </button>
+      </div>
+
+      <!-- Search Results Container -->
+      <div id="searchResultsList" class="flex-1 overflow-y-auto space-y-2 pr-1 min-h-[180px] max-h-[50vh]">
+        <!-- JS Rendered Results -->
+      </div>
+
+      <!-- Footer Help Bar -->
+      <div class="mt-4 pt-3 border-t-2 border-[var(--hh-card-border)] flex flex-wrap items-center justify-between gap-2 text-[11px] font-bold text-[var(--hh-paragraph)] opacity-75">
+        <div class="flex items-center gap-3">
+          <span class="flex items-center gap-1"><kbd class="px-1.5 py-0.5 rounded bg-[var(--hh-accent-ice)] border border-[var(--hh-card-border)]">Esc</kbd> 關閉</span>
+          <span class="flex items-center gap-1"><kbd class="px-1.5 py-0.5 rounded bg-[var(--hh-accent-ice)] border border-[var(--hh-card-border)]">↑</kbd><kbd class="px-1.5 py-0.5 rounded bg-[var(--hh-accent-ice)] border border-[var(--hh-card-border)]">↓</kbd> 選擇</span>
+          <span class="flex items-center gap-1"><kbd class="px-1.5 py-0.5 rounded bg-[var(--hh-accent-ice)] border border-[var(--hh-card-border)]">Enter</kbd> 開啟</span>
+        </div>
+        <span id="searchResultCount" class="hh-badge px-2.5 py-0.5 rounded-full text-[10px]">0 筆結果</span>
+      </div>
+
+    </div>
   </div>
 
   <!-- Reusable Custom Modal -->
@@ -1248,11 +1308,299 @@
       }
     }
 
+    // --- Central Search & Instant Navigation System ---
+
+    let currentSearchResults = [];
+    let selectedResultIndex = -1;
+
+    function openSearchModal() {
+      const overlay = document.getElementById('searchModalOverlay');
+      const card = document.getElementById('searchModalContent');
+      const input = document.getElementById('searchInput');
+
+      overlay.classList.remove('opacity-0', 'pointer-events-none');
+      card.classList.remove('scale-95');
+      card.classList.add('scale-100');
+
+      input.value = '';
+      document.getElementById('btnClearSearch').classList.add('hidden');
+      performSearch('');
+
+      setTimeout(() => {
+        input.focus();
+      }, 50);
+    }
+
+    function closeSearchModal() {
+      const overlay = document.getElementById('searchModalOverlay');
+      const card = document.getElementById('searchModalContent');
+
+      overlay.classList.add('opacity-0', 'pointer-events-none');
+      card.classList.remove('scale-100');
+      card.classList.add('scale-95');
+      selectedResultIndex = -1;
+      currentSearchResults = [];
+    }
+
+    function performSearch(query) {
+      const q = query.trim().toLowerCase();
+      const btnClear = document.getElementById('btnClearSearch');
+      const countEl = document.getElementById('searchResultCount');
+
+      if (q) {
+        btnClear.classList.remove('hidden');
+      } else {
+        btnClear.classList.add('hidden');
+      }
+
+      currentSearchResults = [];
+
+      state.subjects.forEach(sub => {
+        // 1. Match Subject
+        if (!q || sub.name.toLowerCase().includes(q)) {
+          currentSearchResults.push({
+            type: 'subject',
+            id: sub.id,
+            subjectId: sub.id,
+            rangeId: sub.ranges && sub.ranges.length > 0 ? sub.ranges[0].id : null,
+            title: sub.name,
+            subtitle: `科目 (${sub.ranges ? sub.ranges.length : 0} 個單元範圍)`,
+            icon: 'folder'
+          });
+        }
+
+        if (sub.ranges) {
+          sub.ranges.forEach(rng => {
+            // 2. Match Range
+            if (q && rng.name.toLowerCase().includes(q)) {
+              currentSearchResults.push({
+                type: 'range',
+                id: rng.id,
+                subjectId: sub.id,
+                rangeId: rng.id,
+                title: rng.name,
+                subtitle: `單元範圍 📍 ${sub.name}`,
+                icon: 'bookmark'
+              });
+            }
+
+            if (rng.links) {
+              rng.links.forEach(lnk => {
+                // 3. Match Link
+                if (q && (lnk.title.toLowerCase().includes(q) || lnk.url.toLowerCase().includes(q))) {
+                  currentSearchResults.push({
+                    type: 'link',
+                    id: lnk.id,
+                    subjectId: sub.id,
+                    rangeId: rng.id,
+                    linkId: lnk.id,
+                    title: lnk.title,
+                    subtitle: `學習連結 📍 ${sub.name} > ${rng.name}`,
+                    icon: 'external-link',
+                    url: lnk.url
+                  });
+                }
+              });
+            }
+          });
+        }
+      });
+
+      countEl.textContent = `${currentSearchResults.length} 筆結果`;
+      selectedResultIndex = currentSearchResults.length > 0 ? 0 : -1;
+      renderSearchResults(currentSearchResults, q);
+    }
+
+    function renderSearchResults(results, query) {
+      const container = document.getElementById('searchResultsList');
+      container.innerHTML = '';
+
+      if (results.length === 0) {
+        container.innerHTML = `
+          <div class="text-center py-10 px-4 text-[var(--hh-paragraph)] opacity-60">
+            <i data-lucide="search-x" class="w-8 h-8 mx-auto mb-2 opacity-50"></i>
+            <p class="text-xs font-bold">找不到包含「${escapeHtml(query)}」的學習資料</p>
+          </div>
+        `;
+        lucide.createIcons({ props: { searchTarget: container } });
+        return;
+      }
+
+      results.forEach((res, index) => {
+        const item = document.createElement('div');
+        const isSelected = index === selectedResultIndex;
+        
+        let typeBadge = '';
+        if (res.type === 'subject') {
+          typeBadge = `<span class="px-2 py-0.5 text-[10px] font-extrabold rounded-md bg-emerald-100 text-emerald-800 border border-emerald-300 dark:bg-emerald-950 dark:text-emerald-300">科目</span>`;
+        } else if (res.type === 'range') {
+          typeBadge = `<span class="px-2 py-0.5 text-[10px] font-extrabold rounded-md bg-sky-100 text-sky-800 border border-sky-300 dark:bg-sky-950 dark:text-sky-300">單元範圍</span>`;
+        } else {
+          typeBadge = `<span class="px-2 py-0.5 text-[10px] font-extrabold rounded-md bg-amber-100 text-amber-800 border border-amber-300 dark:bg-amber-950 dark:text-amber-300">學習連結</span>`;
+        }
+
+        item.className = `search-result-item flex items-center justify-between p-3 rounded-xl cursor-pointer transition-all duration-150 border-2 ${
+          isSelected 
+            ? 'hh-card-active border-[var(--hh-card-border)] ring-2 ring-[var(--hh-btn-main)]' 
+            : 'bg-[var(--hh-card)] border-[var(--hh-card-border)] hover:border-[var(--hh-card-hover-border)]'
+        }`;
+        item.dataset.index = index;
+
+        item.innerHTML = `
+          <div class="flex items-center gap-3 overflow-hidden">
+            <div class="w-9 h-9 rounded-xl bg-[var(--hh-accent-ice)] border-2 border-[var(--hh-card-border)] flex items-center justify-center shrink-0">
+              <i data-lucide="${res.icon}" class="w-4 h-4 text-[var(--hh-headline)]"></i>
+            </div>
+            <div class="overflow-hidden">
+              <h5 class="text-xs font-black hh-headline truncate">${escapeHtml(res.title)}</h5>
+              <p class="text-[11px] font-semibold text-[var(--hh-paragraph)] opacity-80 truncate">${escapeHtml(res.subtitle)}</p>
+            </div>
+          </div>
+          <div class="flex items-center gap-2 shrink-0 ml-2">
+            ${typeBadge}
+            <i data-lucide="corner-down-left" class="w-4 h-4 text-[var(--hh-paragraph)] opacity-50"></i>
+          </div>
+        `;
+
+        item.onclick = () => {
+          navigateToResult(res);
+        };
+
+        item.onmouseenter = () => {
+          selectedResultIndex = index;
+          updateSearchResultHighlights();
+        };
+
+        container.appendChild(item);
+      });
+
+      lucide.createIcons({ props: { searchTarget: container } });
+    }
+
+    function updateSearchResultHighlights() {
+      const items = document.querySelectorAll('.search-result-item');
+      items.forEach((el, idx) => {
+        if (idx === selectedResultIndex) {
+          el.classList.add('hh-card-active', 'ring-2', 'ring-[var(--hh-btn-main)]');
+          el.classList.remove('bg-[var(--hh-card)]');
+          el.scrollIntoView({ block: 'nearest' });
+        } else {
+          el.classList.remove('hh-card-active', 'ring-2', 'ring-[var(--hh-btn-main)]');
+          el.classList.add('bg-[var(--hh-card)]');
+        }
+      });
+    }
+
+    function navigateToResult(res) {
+      if (!res) return;
+
+      state.activeSubjectId = res.subjectId;
+      if (res.rangeId) {
+        state.activeRangeId = res.rangeId;
+      }
+      
+      saveState();
+      
+      // iPad / Mobile Tab switch if compact screen
+      if (window.innerWidth <= 1024) {
+        if (res.type === 'link' || res.type === 'range') {
+          currentMobileTab = 'links';
+        } else {
+          currentMobileTab = 'nav';
+        }
+      }
+
+      renderAll();
+      closeSearchModal();
+
+      const subObj = state.subjects.find(s => s.id === res.subjectId);
+      const subName = subObj ? subObj.name : '';
+      showToast(`已跳轉至：「${subName}${res.title ? ' > ' + res.title : ''}」`, 'success');
+
+      // Scroll into view & pulse animation for better visual focus
+      setTimeout(() => {
+        if (res.type === 'link' && res.linkId) {
+          const linksCol = document.getElementById('linksColumnWrapper');
+          if (linksCol) {
+            linksCol.classList.add('animate-pulse-highlight');
+            setTimeout(() => linksCol.classList.remove('animate-pulse-highlight'), 1200);
+          }
+        } else if (res.type === 'range') {
+          const rangeCol = document.getElementById('rangeList');
+          if (rangeCol) {
+            rangeCol.classList.add('animate-pulse-highlight');
+            setTimeout(() => rangeCol.classList.remove('animate-pulse-highlight'), 1200);
+          }
+        }
+      }, 100);
+    }
+
     // --- DOM Event Listeners ---
 
     document.addEventListener('DOMContentLoaded', () => {
       loadState();
       renderAll();
+
+      // Search Trigger & Modal Bindings
+      document.getElementById('btnOpenSearch').addEventListener('click', openSearchModal);
+      
+      const searchInput = document.getElementById('searchInput');
+      searchInput.addEventListener('input', (e) => {
+        performSearch(e.target.value);
+      });
+
+      document.getElementById('btnClearSearch').addEventListener('click', () => {
+        searchInput.value = '';
+        performSearch('');
+        searchInput.focus();
+      });
+
+      document.getElementById('searchModalOverlay').addEventListener('click', (e) => {
+        if (e.target === document.getElementById('searchModalOverlay')) {
+          closeSearchModal();
+        }
+      });
+
+      // Keyboard Navigation for Search Modal & Shortcut (Ctrl+K / Cmd+K)
+      document.addEventListener('keydown', (e) => {
+        const searchOverlay = document.getElementById('searchModalOverlay');
+        const isSearchOpen = searchOverlay && !searchOverlay.classList.contains('opacity-0');
+
+        if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') {
+          e.preventDefault();
+          if (isSearchOpen) {
+            closeSearchModal();
+          } else {
+            openSearchModal();
+          }
+          return;
+        }
+
+        if (isSearchOpen) {
+          if (e.key === 'Escape') {
+            closeSearchModal();
+          } else if (e.key === 'ArrowDown') {
+            e.preventDefault();
+            if (currentSearchResults.length > 0) {
+              selectedResultIndex = (selectedResultIndex + 1) % currentSearchResults.length;
+              updateSearchResultHighlights();
+            }
+          } else if (e.key === 'ArrowUp') {
+            e.preventDefault();
+            if (currentSearchResults.length > 0) {
+              selectedResultIndex = (selectedResultIndex - 1 + currentSearchResults.length) % currentSearchResults.length;
+              updateSearchResultHighlights();
+            }
+          } else if (e.key === 'Enter') {
+            e.preventDefault();
+            if (selectedResultIndex >= 0 && selectedResultIndex < currentSearchResults.length) {
+              navigateToResult(currentSearchResults[selectedResultIndex]);
+            }
+          }
+        } else if (e.key === 'Escape') {
+          closeModal();
+        }
+      });
 
       // Theme Switcher Event
       const themeNamesMap = {
@@ -1298,10 +1646,6 @@
       });
       document.getElementById('modalOverlay').addEventListener('click', (e) => {
         if (e.target === document.getElementById('modalOverlay')) closeModal();
-      });
-
-      document.addEventListener('keydown', (e) => {
-        if (e.key === 'Escape') closeModal();
       });
     });
   </script>
