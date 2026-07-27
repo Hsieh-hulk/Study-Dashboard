@@ -512,198 +512,25 @@
   <!-- JavaScript Logic -->
   <script>
     // Storage Keys
-    const STORAGE_KEY = 'study_agent_db';
+    const STORAGE_KEY = 'study_agent_db_v4';
     const THEME_KEY = 'happyhues_theme_setting';
 
     // Seed Initial Sample Data
     const INITIAL_SEED = {
       subjects: [
-        {
-          id: 'sub_chi_01',
-          name: '國文 📖',
-          ranges: [
-            {
-              id: 'rng_chi_101',
-              name: 'B1 古文經典選讀',
-              links: [
-                { id: 'lnk_chi_101', title: '核心古文重點筆記整理', url: 'https://example.com/chinese-notes' }
-              ]
-            },
-            {
-              id: 'rng_chi_102',
-              name: 'B2 現代文學與韻文',
-              links: []
-            }
-          ]
-        },
-        {
-          id: 'sub_eng_02',
-          name: '英文 🔤',
-          ranges: [
-            {
-              id: 'rng_eng_201',
-              name: 'B1 核心單字與文法',
-              links: [
-                { id: 'lnk_eng_201', title: '高中 7000 單字學習庫', url: 'https://example.com/vocab-7000' }
-              ]
-            },
-            {
-              id: 'rng_eng_202',
-              name: 'B2 閱覽與寫作技巧',
-              links: []
-            }
-          ]
-        },
-        {
-          id: 'sub_math_03',
-          name: '數學 📐',
-          ranges: [
-            {
-              id: 'rng_math_301',
-              name: 'B1 數與式、多項式',
-              links: [
-                { id: 'lnk_math_301', title: '高中數學公式總整理', url: 'https://example.com/math-formulas' }
-              ]
-            },
-            {
-              id: 'rng_math_302',
-              name: 'B2 直線與圓、數列級數',
-              links: []
-            }
-          ]
-        },
-        {
-          id: 'sub_his_04',
-          name: '歷史 📜',
-          ranges: [
-            {
-              id: 'rng_his_401',
-              name: 'B1 臺灣史與近代轉型',
-              links: [
-                { id: 'lnk_his_301', title: '臺灣歷史數位典藏網', url: 'https://example.com/taiwan-history' }
-              ]
-            },
-            {
-              id: 'rng_his_402',
-              name: 'B2 東亞史與區域文化',
-              links: []
-            }
-          ]
-        },
-        {
-          id: 'sub_geo_05',
-          name: '地理 🗺️',
-          ranges: [
-            {
-              id: 'rng_geo_501',
-              name: 'B1 地理資訊與自然環境',
-              links: [
-                { id: 'lnk_geo_501', title: 'GIS 地理資訊系統與地圖學', url: 'https://example.com/gis-geography' }
-              ]
-            },
-            {
-              id: 'rng_geo_502',
-              name: 'B2 人文地理與區域發展',
-              links: []
-            }
-          ]
-        },
-        {
-          id: 'sub_civ_06',
-          name: '公民 ⚖️',
-          ranges: [
-            {
-              id: 'rng_civ_601',
-              name: 'B1 民主政治與憲政民主',
-              links: [
-                { id: 'lnk_civ_601', title: '憲法與人權保障重點手冊', url: 'https://example.com/civics-rights' }
-              ]
-            },
-            {
-              id: 'rng_civ_602',
-              name: 'B2 法律基礎與社會正義',
-              links: []
-            }
-          ]
-        },
-        {
-          id: 'sub_phy_07',
-          name: '物理 ⚡',
-          ranges: [
-            {
-              id: 'rng_phy_701',
-              name: 'B1 物體的運動與受力',
-              links: [
-                { id: 'lnk_201', title: '牛頓三大運動定律 PhET 動畫模擬', url: 'https://phet.colorado.edu' }
-              ]
-            },
-            {
-              id: 'rng_phy_702',
-              name: 'B2 物質的結構與能量',
-              links: []
-            }
-          ]
-        },
-        {
-          id: 'sub_chem_08',
-          name: '化學 🧪',
-          ranges: [
-            {
-              id: 'rng_chem_801',
-              name: 'B1 物質的組成',
-              links: [
-                { id: 'lnk_101', title: '基礎化學總複習筆記', url: 'https://example.com/chem-notes' },
-                { id: 'lnk_102', title: '週期表互動學習網', url: 'https://ptable.com' }
-              ]
-            },
-            {
-              id: 'rng_chem_802',
-              name: 'B2 化學反應與計量',
-              links: [
-                { id: 'lnk_103', title: '氧化還原與電化學重點整理', url: 'https://example.com/redox' }
-              ]
-            }
-          ]
-        },
-        {
-          id: 'sub_bio_09',
-          name: '生物 🧬',
-          ranges: [
-            {
-              id: 'rng_bio_901',
-              name: 'B1 細胞構造與生理',
-              links: [
-                { id: 'lnk_bio_901', title: '細胞膜與代謝作用講義', url: 'https://example.com/bio-cell' }
-              ]
-            },
-            {
-              id: 'rng_bio_902',
-              name: 'B2 遺傳與演化',
-              links: []
-            }
-          ]
-        },
-        {
-          id: 'sub_earth_10',
-          name: '地科 🌍',
-          ranges: [
-            {
-              id: 'rng_earth_1001',
-              name: 'B1 地球系統與大氣',
-              links: [
-                { id: 'lnk_earth_1001', title: '氣象與大氣環流學習圖解', url: 'https://example.com/earth-science' }
-              ]
-            },
-            {
-              id: 'rng_earth_1002',
-              name: 'B2 天文與地質構造',
-              links: []
-            }
-          ]
-        }
+        { id: 'sub_chi_01', name: '國文 📖', ranges: [] },
+        { id: 'sub_eng_02', name: '英文 🔤', ranges: [] },
+        { id: 'sub_math_03', name: '數學 📐', ranges: [] },
+        { id: 'sub_his_04', name: '歷史 📜', ranges: [] },
+        { id: 'sub_geo_05', name: '地理 🗺️', ranges: [] },
+        { id: 'sub_civ_06', name: '公民 ⚖️', ranges: [] },
+        { id: 'sub_phy_07', name: '物理 ⚡', ranges: [] },
+        { id: 'sub_chem_08', name: '化學 🧪', ranges: [] },
+        { id: 'sub_bio_09', name: '生物 🧬', ranges: [] },
+        { id: 'sub_earth_10', name: '地科 🌍', ranges: [] }
       ],
       activeSubjectId: 'sub_chi_01',
-      activeRangeId: 'rng_chi_101'
+      activeRangeId: null
     };
 
     // State Container
