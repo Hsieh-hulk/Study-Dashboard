@@ -1,0 +1,1414 @@
+<!DOCTYPE html>
+<html lang="zh-TW" data-theme="sage">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>學習資料管理 Dashboard | Happy Hues & iPad 11" Edition</title>
+  <meta name="description" content="Happy Hues 繽紛風格與 iPad 11" 平板專屬優化 - 自訂學習資料與複習連結管理系統。">
+  
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap" rel="stylesheet">
+  
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['"Plus Jakarta Sans"', '"Noto Sans TC"', 'sans-serif'],
+          },
+          screens: {
+            'ipad-portrait': {'raw': '(min-width: 768px) and (max-width: 1024px) and (orientation: portrait)'},
+            'ipad-landscape': {'raw': '(min-width: 1024px) and (max-width: 1280px)'},
+          }
+        }
+      }
+    }
+  </script>
+  
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+
+  <style>
+    /* --- HAPPY HUES & STUDY FOCUS DESIGN SYSTEM THEMES --- */
+    
+    /* 1. Focus Sage Green (🌿 舒緩森林 - 沉穩耐看，大幅降低眼睛疲勞感) */
+    :root[data-theme="sage"] {
+      --hh-bg: #f1f5f2;
+      --hh-headline: #1b382b;
+      --hh-paragraph: #2d4c3e;
+      --hh-card: #ffffff;
+      --hh-card-border: #1b382b;
+      --hh-card-hover-border: #52796f;
+      --hh-btn-main: #52796f;
+      --hh-btn-main-hover: #354f52;
+      --hh-btn-text: #ffffff;
+      --hh-accent-blush: #cad2c5;
+      --hh-accent-ice: #e8f0ec;
+      --hh-accent-teal: #84a59d;
+      --hh-shadow: #1b382b;
+      --hh-badge-bg: #e8f0ec;
+      --hh-badge-text: #1b382b;
+      --hh-input-bg: #ffffff;
+    }
+
+    /* 2. Soft Dusk Dark Mode (🌙 柔和夜讀 - 晚間低藍光防刺眼暗色調) */
+    :root[data-theme="dusk"] {
+      --hh-bg: #1a1c23;
+      --hh-headline: #f0f2f5;
+      --hh-paragraph: #94a3b8;
+      --hh-card: #222530;
+      --hh-card-border: #4a5568;
+      --hh-card-hover-border: #dd6b20;
+      --hh-btn-main: #dd6b20;
+      --hh-btn-main-hover: #c05621;
+      --hh-btn-text: #ffffff;
+      --hh-accent-blush: #2d3748;
+      --hh-accent-ice: #2d3748;
+      --hh-accent-teal: #718096;
+      --hh-shadow: #111318;
+      --hh-badge-bg: #2d3748;
+      --hh-badge-text: #ed8936;
+      --hh-input-bg: #1a1c23;
+    }
+
+    /* 3. Sunny Day (☀️ 陽光黃 - 活力經典) */
+    :root[data-theme="sunny"] {
+      --hh-bg: #fffffe;
+      --hh-headline: #272343;
+      --hh-paragraph: #2d334a;
+      --hh-card: #ffffff;
+      --hh-card-border: #272343;
+      --hh-card-hover-border: #ffd803;
+      --hh-btn-main: #ffd803;
+      --hh-btn-main-hover: #f3ca00;
+      --hh-btn-text: #272343;
+      --hh-accent-blush: #eebbc3;
+      --hh-accent-ice: #e3f6f5;
+      --hh-accent-teal: #bae8e8;
+      --hh-shadow: #272343;
+      --hh-badge-bg: #e3f6f5;
+      --hh-badge-text: #272343;
+      --hh-input-bg: #ffffff;
+    }
+
+    /* 6. Mint Fresh (🍃 清新薄荷 - 爽朗綠意) */
+    /* 7. Midnight Neon (⚡ 夜間霓虹 - 極致高對比暗色) */
+    :root[data-theme="midnight"] {
+      --hh-bg: #0f0e17;
+      --hh-headline: #fffffe;
+      --hh-paragraph: #a7a9be;
+      --hh-card: #16161a;
+      --hh-card-border: #72757e;
+      --hh-card-hover-border: #ff8906;
+      --hh-btn-main: #ff8906;
+      --hh-btn-main-hover: #e57800;
+      --hh-btn-text: #fffffe;
+      --hh-accent-blush: #f25f4c;
+      --hh-accent-ice: #2cb67d;
+      --hh-accent-teal: #72757e;
+      --hh-shadow: #000000;
+      --hh-badge-bg: #282536;
+      --hh-badge-text: #ff8906;
+      --hh-input-bg: #0f0e17;
+    }
+
+    /* Base Body Applying Happy Hues Palette */
+    body {
+      background-color: var(--hh-bg);
+      color: var(--hh-paragraph);
+      font-family: 'Plus Jakarta Sans', 'Noto Sans TC', sans-serif;
+      transition: background-color 0.3s ease, color 0.3s ease;
+    }
+
+    /* Dynamic Custom Scrollbar */
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: transparent;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: var(--hh-card-border);
+      border-radius: 9999px;
+      opacity: 0.5;
+    }
+
+    /* Happy Hues Neo-Tactile Box Shadows & Borders */
+    .hh-card {
+      background-color: var(--hh-card);
+      border: 2.5px solid var(--hh-card-border);
+      box-shadow: 4px 4px 0px 0px var(--hh-shadow);
+      border-radius: 16px;
+      transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .hh-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 6px 6px 0px 0px var(--hh-shadow);
+      border-color: var(--hh-card-hover-border);
+    }
+
+    .hh-card-active {
+      background-color: var(--hh-accent-ice);
+      border-color: var(--hh-card-border);
+      box-shadow: 4px 4px 0px 0px var(--hh-shadow);
+    }
+
+    .hh-btn-primary {
+      background-color: var(--hh-btn-main);
+      color: var(--hh-btn-text);
+      border: 2px solid var(--hh-card-border);
+      box-shadow: 3px 3px 0px 0px var(--hh-shadow);
+      font-weight: 700;
+      border-radius: 12px;
+      min-height: 44px; /* iPad Touch Friendly */
+      transition: all 0.15s ease;
+    }
+
+    .hh-btn-primary:hover {
+      background-color: var(--hh-btn-main-hover);
+      transform: translate(-1px, -1px);
+      box-shadow: 4px 4px 0px 0px var(--hh-shadow);
+    }
+
+    .hh-btn-primary:active {
+      transform: translate(2px, 2px);
+      box-shadow: 1px 1px 0px 0px var(--hh-shadow);
+    }
+
+    .hh-btn-secondary {
+      background-color: var(--hh-card);
+      color: var(--hh-headline);
+      border: 2px solid var(--hh-card-border);
+      box-shadow: 3px 3px 0px 0px var(--hh-shadow);
+      font-weight: 600;
+      border-radius: 12px;
+      min-height: 44px; /* iPad Touch Friendly */
+      transition: all 0.15s ease;
+    }
+
+    .hh-btn-secondary:hover {
+      background-color: var(--hh-accent-ice);
+      transform: translate(-1px, -1px);
+      box-shadow: 4px 4px 0px 0px var(--hh-shadow);
+    }
+
+    .hh-btn-secondary:active {
+      transform: translate(2px, 2px);
+      box-shadow: 1px 1px 0px 0px var(--hh-shadow);
+    }
+
+    .hh-input {
+      background-color: var(--hh-input-bg);
+      border: 2px solid var(--hh-card-border);
+      color: var(--hh-headline);
+      border-radius: 10px;
+      min-height: 44px; /* iPad Touch Friendly */
+      box-shadow: inset 2px 2px 0px rgba(0,0,0,0.05);
+    }
+
+    .hh-input:focus {
+      outline: none;
+      border-color: var(--hh-btn-main);
+      box-shadow: 0 0 0 3px rgba(255, 216, 3, 0.3);
+    }
+
+    .hh-headline {
+      color: var(--hh-headline);
+    }
+
+    .hh-badge {
+      background-color: var(--hh-badge-bg);
+      color: var(--hh-badge-text);
+      border: 1.5px solid var(--hh-card-border);
+      font-weight: 700;
+    }
+
+    /* iPad 11-inch Viewport Specific Adjustments */
+    .ipad-touch-target {
+      min-height: 44px;
+      min-width: 44px;
+    }
+
+    /* iPad Simulator Frame Styling */
+    .ipad-frame-container {
+      max-width: 100%;
+      margin: 0 auto;
+      transition: all 0.4s ease;
+    }
+
+    .ipad-frame-container.active-ipad-portrait {
+      width: 834px;
+      min-height: 1194px;
+      border: 16px solid #1e293b;
+      border-radius: 36px;
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.4), 0 0 0 4px #0f172a;
+      padding: 16px;
+      background: var(--hh-bg);
+    }
+
+    .ipad-frame-container.active-ipad-landscape {
+      width: 1194px;
+      min-height: 834px;
+      border: 16px solid #1e293b;
+      border-radius: 36px;
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.4), 0 0 0 4px #0f172a;
+      padding: 20px;
+      background: var(--hh-bg);
+    }
+
+    /* Keyframe Animations */
+    @keyframes popIn {
+      0% { transform: scale(0.96); opacity: 0; }
+      100% { transform: scale(1); opacity: 1; }
+    }
+
+    .animate-pop-in {
+      animation: popIn 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+  </style>
+</head>
+
+<body class="min-h-screen flex flex-col antialiased selection:bg-amber-300 selection:text-slate-900">
+
+  <!-- Header Bar -->
+  <header class="sticky top-0 z-30 bg-[var(--hh-card)] border-b-4 border-[var(--hh-card-border)] px-4 lg:px-8 py-3.5 flex flex-wrap items-center justify-between gap-4 shadow-sm">
+    
+    <!-- Title & Brand -->
+    <div class="flex items-center space-x-3">
+      <div class="w-11 h-11 rounded-xl bg-[var(--hh-btn-main)] border-2 border-[var(--hh-card-border)] flex items-center justify-center shadow-[3px_3px_0px_0px_var(--hh-shadow)] shrink-0">
+        <i data-lucide="graduation-cap" class="w-6 h-6 text-[var(--hh-btn-text)]"></i>
+      </div>
+      <div>
+        <h1 class="text-lg lg:text-xl font-black tracking-tight hh-headline flex items-center gap-2">
+          <span>Study Dashboard</span>
+          <span class="px-2 py-0.5 text-[10px] font-black rounded-md bg-[var(--hh-accent-blush)] text-[var(--hh-card-border)] border border-[var(--hh-card-border)] uppercase tracking-wider">
+            Happy Hues 11"
+          </span>
+        </h1>
+        <p class="text-xs font-semibold text-[var(--hh-paragraph)] opacity-85">自訂學習資料管理與 11" iPad 平板優化</p>
+      </div>
+    </div>
+
+    <!-- Controls & Actions -->
+    <div class="flex flex-wrap items-center gap-2 sm:gap-3">
+      
+      <!-- Theme Switcher Selector -->
+      <div class="relative flex items-center">
+        <span class="text-xs font-bold mr-1.5 hidden sm:inline hh-headline">🎨 讀書色調:</span>
+        <select id="themeSelector" class="hh-input px-3 py-1.5 text-xs font-bold rounded-xl cursor-pointer shadow-sm pr-8">
+          <option value="sage">🌿 舒緩森林 (護眼防疲勞推薦)</option>
+          <option value="dusk">🌙 柔和夜讀 (晚間低藍光)</option>
+          <option value="sunny">☀️ 陽光活力 (明亮黃)</option>
+          <option value="midnight">⚡ 夜間霓虹 (極致暗色)</option>
+        </select>
+      </div>
+
+      <!-- iPad 11" Simulator Toggle Button -->
+      <button id="btnToggleIpadSim" class="hh-btn-secondary px-3 py-2 text-xs font-bold flex items-center gap-1.5" title="切換 11 吋 iPad 實機模擬視角">
+        <i data-lucide="tablet" class="w-4 h-4 text-indigo-500"></i>
+        <span id="ipadSimBtnText" class="hidden md:inline">11" iPad 視角: 預設</span>
+      </button>
+
+      <!-- Backup Export / Import / Reset -->
+      <div class="flex items-center gap-1.5">
+        <button id="btnExport" class="hh-btn-secondary px-3 py-2 text-xs font-bold flex items-center gap-1" title="匯出 JSON 備份檔">
+          <i data-lucide="download" class="w-4 h-4"></i>
+          <span class="hidden sm:inline">匯出</span>
+        </button>
+
+        <button id="btnImportTrigger" class="hh-btn-secondary px-3 py-2 text-xs font-bold flex items-center gap-1" title="匯入 JSON 備份檔">
+          <i data-lucide="upload" class="w-4 h-4"></i>
+          <span class="hidden sm:inline">匯入</span>
+        </button>
+        <input type="file" id="importFileInput" accept=".json" class="hidden" />
+
+        <button id="btnResetSeed" class="hh-btn-secondary px-2.5 py-2 text-xs font-bold hover:text-rose-600" title="重置範例資料">
+          <i data-lucide="rotate-ccw" class="w-4 h-4"></i>
+        </button>
+      </div>
+
+    </div>
+  </header>
+
+  <!-- iPad Frame Simulator Controls Bar (Shown only in iPad Sim Mode) -->
+  <div id="ipadSimControlsBar" class="hidden bg-[var(--hh-accent-ice)] border-b-2 border-[var(--hh-card-border)] px-4 py-2 text-xs font-bold text-center flex items-center justify-center gap-4 animate-pop-in">
+    <div class="flex items-center gap-2 hh-headline">
+      <i data-lucide="tablet-smartphone" class="w-4 h-4"></i>
+      <span>11 吋 iPad (Pro / Air) 實機視角模擬中</span>
+    </div>
+    <div class="flex items-center gap-2">
+      <button id="btnIpadPortrait" class="px-3 py-1 rounded-lg border-2 border-[var(--hh-card-border)] text-[11px] bg-white font-black shadow-sm">
+        📱 直立 (834 × 1194)
+      </button>
+      <button id="btnIpadLandscape" class="px-3 py-1 rounded-lg border-2 border-[var(--hh-card-border)] text-[11px] bg-white font-black opacity-60">
+        💻 橫向 (1194 × 834)
+      </button>
+      <button id="btnCloseIpadSim" class="px-2 py-1 rounded-lg bg-rose-500 text-white font-black text-[11px] ml-2">
+        關閉模擬
+      </button>
+    </div>
+  </div>
+
+  <!-- iPad Portrait Mobile Segmented Tab Switcher (Visible on iPad Portrait / Small Screen) -->
+  <div class="lg:hidden max-w-7xl w-full mx-auto px-4 pt-4">
+    <div class="grid grid-cols-2 gap-2 p-1.5 rounded-xl border-2 border-[var(--hh-card-border)] bg-[var(--hh-card)] shadow-sm">
+      <button id="tabBtnNav" class="py-2 text-xs font-bold rounded-lg border-2 border-transparent bg-[var(--hh-btn-main)] text-[var(--hh-btn-text)] shadow-sm flex items-center justify-center gap-1.5">
+        <i data-lucide="book-open" class="w-4 h-4"></i>
+        <span>科目與單元範圍</span>
+      </button>
+      <button id="tabBtnLinks" class="py-2 text-xs font-bold rounded-lg border-2 border-transparent text-[var(--hh-paragraph)] flex items-center justify-center gap-1.5">
+        <i data-lucide="link" class="w-4 h-4"></i>
+        <span>學習資源連結</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- Main iPad Frame Outer Container -->
+  <div class="flex-1 py-4 lg:py-6 px-2 sm:px-4">
+    <div id="ipadFrameContainer" class="ipad-frame-container">
+      
+      <!-- Main Content Grid -->
+      <main class="w-full max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-5 lg:gap-6">
+
+        <!-- Column 1 & 2 Wrapper (Side-by-side or stacked for iPad nav) -->
+        <div id="navColumnsWrapper" class="lg:col-span-6 grid grid-cols-1 md:grid-cols-2 gap-5 lg:gap-6">
+          
+          <!-- Column 1: Subjects (Left Sidebar) -->
+          <section class="hh-card p-4 flex flex-col relative overflow-hidden">
+            <div class="flex items-center justify-between mb-4 pb-3 border-b-2 border-[var(--hh-card-border)]">
+              <div class="flex items-center gap-2">
+                <i data-lucide="book-open" class="w-5 h-5 text-[var(--hh-headline)]"></i>
+                <h2 class="font-extrabold text-sm tracking-wide hh-headline uppercase">學習科目</h2>
+              </div>
+              <button id="btnAddSubject" class="hh-btn-primary px-3 py-1.5 text-xs flex items-center gap-1">
+                <i data-lucide="plus" class="w-4 h-4"></i>
+                <span>新增科目</span>
+              </button>
+            </div>
+
+            <!-- Subject List Container -->
+            <div id="subjectList" class="flex-1 overflow-y-auto space-y-2.5 pr-1 max-h-[calc(100vh-280px)] min-h-[160px]">
+              <!-- JS Rendered -->
+            </div>
+          </section>
+
+          <!-- Column 2: Ranges (Middle Sidebar) -->
+          <section class="hh-card p-4 flex flex-col relative overflow-hidden">
+            <div class="flex items-center justify-between mb-4 pb-3 border-b-2 border-[var(--hh-card-border)]">
+              <div class="flex items-center gap-2 overflow-hidden">
+                <i data-lucide="layers" class="w-5 h-5 text-[var(--hh-headline)] shrink-0"></i>
+                <h2 class="font-extrabold text-sm tracking-wide hh-headline uppercase truncate">單元範圍</h2>
+              </div>
+              <button id="btnAddRange" class="hh-btn-primary px-3 py-1.5 text-xs flex items-center gap-1 disabled:opacity-40 disabled:cursor-not-allowed" disabled>
+                <i data-lucide="plus" class="w-4 h-4"></i>
+                <span>新增範圍</span>
+              </button>
+            </div>
+
+            <!-- Range List Container -->
+            <div id="rangeList" class="flex-1 overflow-y-auto space-y-2.5 pr-1 max-h-[calc(100vh-280px)] min-h-[160px]">
+              <!-- JS Rendered -->
+            </div>
+          </section>
+
+        </div>
+
+        <!-- Column 3: Links (Main Content Area) -->
+        <section id="linksColumnWrapper" class="lg:col-span-6 hh-card p-4 lg:p-6 flex flex-col relative">
+          
+          <!-- Content Header & Breadcrumb -->
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-5 pb-4 border-b-2 border-[var(--hh-card-border)]">
+            <div>
+              <!-- Dynamic Breadcrumb -->
+              <nav id="breadcrumbNav" class="flex items-center gap-2 text-xs font-bold text-[var(--hh-paragraph)] opacity-75 mb-1">
+                <span>請先選取科目與範圍</span>
+              </nav>
+              <h3 id="currentRangeTitle" class="text-lg lg:text-xl font-black hh-headline flex items-center gap-2">
+                <span>學習資源連結</span>
+              </h3>
+            </div>
+            
+            <span id="linkCountBadge" class="self-start sm:self-center hh-badge px-3 py-1 text-xs rounded-full">
+              0 個連結
+            </span>
+          </div>
+
+          <!-- Add Link Form Card -->
+          <div id="addLinkFormCard" class="mb-6 p-4 rounded-xl border-2 border-[var(--hh-card-border)] bg-[var(--hh-card)] shadow-sm hidden">
+            <h4 class="text-xs font-black hh-headline uppercase tracking-wider mb-3 flex items-center gap-1.5">
+              <i data-lucide="link-2" class="w-4 h-4"></i>
+              <span>新增學習連結</span>
+            </h4>
+            <form id="linkForm" class="flex flex-col gap-3">
+              <div class="grid grid-cols-1 sm:grid-cols-12 gap-3">
+                <div class="sm:col-span-5">
+                  <input type="text" id="linkTitleInput" placeholder="連結名稱 (例: 講義/筆記)" required class="w-full px-3.5 py-2 text-xs font-semibold hh-input">
+                </div>
+                <div class="sm:col-span-7">
+                  <input type="text" id="linkUrlInput" placeholder="網址 (例: https://...)" required class="w-full px-3.5 py-2 text-xs font-semibold hh-input">
+                </div>
+              </div>
+              <div class="flex justify-end pt-1">
+                <button type="submit" class="hh-btn-primary px-5 py-2 text-xs font-black flex items-center gap-1.5">
+                  <i data-lucide="plus-circle" class="w-4 h-4"></i>
+                  <span>儲存連結</span>
+                </button>
+              </div>
+            </form>
+          </div>
+
+          <!-- Link Cards Grid Container -->
+          <div id="linkList" class="flex-1 overflow-y-auto max-h-[calc(100vh-360px)] min-h-[220px] pr-1 space-y-3">
+            <!-- JS Rendered -->
+          </div>
+
+        </section>
+
+      </main>
+
+    </div>
+  </div>
+
+  <!-- Reusable Custom Modal -->
+  <div id="modalOverlay" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4 opacity-0 pointer-events-none transition-opacity duration-200">
+    <div id="modalContent" class="hh-card w-full max-w-md p-6 bg-white transform scale-95 transition-transform duration-200">
+      
+      <div class="flex items-center justify-between mb-4 pb-3 border-b-2 border-[var(--hh-card-border)]">
+        <h3 id="modalTitle" class="text-base font-black hh-headline flex items-center gap-2">
+          <!-- Icon & Title -->
+        </h3>
+        <button id="btnModalClose" class="p-1 rounded-lg border border-[var(--hh-card-border)] hover:bg-[var(--hh-accent-ice)] transition">
+          <i data-lucide="x" class="w-5 h-5 text-[var(--hh-headline)]"></i>
+        </button>
+      </div>
+
+      <div id="modalBody" class="space-y-4 font-semibold text-xs text-[var(--hh-paragraph)]">
+        <!-- Dynamic Input or Description -->
+      </div>
+
+      <div class="flex justify-end gap-3 mt-6 pt-4 border-t-2 border-[var(--hh-card-border)]">
+        <button id="btnModalCancel" class="hh-btn-secondary px-4 py-2 text-xs">
+          取消
+        </button>
+        <button id="btnModalConfirm" class="hh-btn-primary px-5 py-2 text-xs">
+          確認
+        </button>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Toast Notification System Container -->
+  <div id="toastContainer" class="fixed bottom-5 right-5 z-50 flex flex-col gap-2.5 pointer-events-none"></div>
+
+  <!-- JavaScript Logic -->
+  <script>
+    // Storage Keys
+    const STORAGE_KEY = 'study_agent_db';
+    const THEME_KEY = 'happyhues_theme_setting';
+
+    // Seed Initial Sample Data
+    const INITIAL_SEED = {
+      subjects: [
+        {
+          id: 'sub_chem_01',
+          name: '化學 🧪',
+          ranges: [
+            {
+              id: 'rng_chem_101',
+              name: 'B1 物質的組成',
+              links: [
+                { id: 'lnk_101', title: '基礎化學總複習筆記', url: 'https://example.com/chem-notes' },
+                { id: 'lnk_102', title: '週期表互動學習網', url: 'https://ptable.com' }
+              ]
+            },
+            {
+              id: 'rng_chem_102',
+              name: 'B2 化學反應與計量',
+              links: [
+                { id: 'lnk_103', title: '氧化還原與電化學重點整理', url: 'https://example.com/redox' }
+              ]
+            }
+          ]
+        },
+        {
+          id: 'sub_phy_02',
+          name: '物理 ⚡',
+          ranges: [
+            {
+              id: 'rng_phy_201',
+              name: 'B1 物體的運動與受力',
+              links: [
+                { id: 'lnk_201', title: '牛頓三大運動定律 PhET 動畫模擬', url: 'https://phet.colorado.edu' }
+              ]
+            }
+          ]
+        },
+        {
+          id: 'sub_his_03',
+          name: '歷史 📜',
+          ranges: [
+            {
+              id: 'rng_his_301',
+              name: '臺灣史與近代轉型',
+              links: [
+                { id: 'lnk_301', title: '臺灣歷史數位典藏網', url: 'https://example.com/taiwan-history' }
+              ]
+            }
+          ]
+        }
+      ],
+      activeSubjectId: 'sub_chem_01',
+      activeRangeId: 'rng_chem_101'
+    };
+
+    // State Container
+    let state = {
+      subjects: [],
+      activeSubjectId: null,
+      activeRangeId: null
+    };
+
+    // iPad Simulator State
+    let ipadSimMode = 'default'; // 'default', 'portrait', 'landscape'
+
+    // Mobile/iPad Tab State ('nav' or 'links')
+    let currentMobileTab = 'nav';
+
+    // --- Core Data Initialization & Persistence ---
+
+    function loadState() {
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if (!raw) {
+          state = JSON.parse(JSON.stringify(INITIAL_SEED));
+          saveState();
+        } else {
+          state = JSON.parse(raw);
+          validateStateDefensive();
+        }
+      } catch (err) {
+        console.error('Failed to parse state from localStorage', err);
+        state = JSON.parse(JSON.stringify(INITIAL_SEED));
+        saveState();
+      }
+
+      // Load Theme (Default to 'sage' eye-care reading mode)
+      const savedTheme = localStorage.getItem(THEME_KEY) || 'sage';
+      const validThemes = ['sage', 'dusk', 'sunny', 'midnight'];
+      if (!validThemes.includes(savedTheme)) {
+        setTheme('sage');
+        document.getElementById('themeSelector').value = 'sage';
+      } else {
+        setTheme(savedTheme);
+        document.getElementById('themeSelector').value = savedTheme;
+      }
+    }
+
+    function saveState() {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    }
+
+    function setTheme(themeName) {
+      document.documentElement.setAttribute('data-theme', themeName);
+      localStorage.setItem(THEME_KEY, themeName);
+    }
+
+    function validateStateDefensive() {
+      const currSub = state.subjects.find(s => s.id === state.activeSubjectId);
+      if (!currSub) {
+        state.activeSubjectId = state.subjects.length > 0 ? state.subjects[0].id : null;
+      }
+      
+      const activeSubObj = state.subjects.find(s => s.id === state.activeSubjectId);
+      if (activeSubObj && activeSubObj.ranges) {
+        const currRng = activeSubObj.ranges.find(r => r.id === state.activeRangeId);
+        if (!currRng) {
+          state.activeRangeId = activeSubObj.ranges.length > 0 ? activeSubObj.ranges[0].id : null;
+        }
+      } else {
+        state.activeRangeId = null;
+      }
+    }
+
+    // --- Helper Functions ---
+
+    function generateId(prefix = 'id') {
+      if (typeof crypto !== 'undefined' && crypto.randomUUID) {
+        return `${prefix}_${crypto.randomUUID().substr(0, 8)}`;
+      }
+      return `${prefix}_${Date.now()}_${Math.random().toString(36).substr(2, 5)}`;
+    }
+
+    function normalizeUrl(url) {
+      let trimmed = url.trim();
+      if (!/^https?:\/\//i.test(trimmed)) {
+        trimmed = 'https://' + trimmed;
+      }
+      return trimmed;
+    }
+
+    function getActiveSubject() {
+      return state.subjects.find(s => s.id === state.activeSubjectId) || null;
+    }
+
+    function getActiveRange() {
+      const sub = getActiveSubject();
+      if (!sub || !sub.ranges) return null;
+      return sub.ranges.find(r => r.id === state.activeRangeId) || null;
+    }
+
+    // --- Toast Notification System ---
+
+    function showToast(message, type = 'success') {
+      const container = document.getElementById('toastContainer');
+      const toast = document.createElement('div');
+      
+      let borderColors = 'bg-[var(--hh-btn-main)] text-[var(--hh-btn-text)] border-2 border-[var(--hh-card-border)]';
+      let iconName = 'check-circle-2';
+
+      if (type === 'info') {
+        borderColors = 'bg-[var(--hh-accent-blush)] text-[var(--hh-card-border)] border-2 border-[var(--hh-card-border)]';
+        iconName = 'info';
+      } else if (type === 'danger') {
+        borderColors = 'bg-rose-500 text-white border-2 border-rose-900';
+        iconName = 'alert-circle';
+      }
+
+      toast.className = `pointer-events-auto flex items-center gap-2.5 px-4 py-3 rounded-xl shadow-[4px_4px_0px_0px_var(--hh-shadow)] text-xs font-bold transition-all duration-300 animate-pop-in ${borderColors}`;
+      toast.innerHTML = `
+        <i data-lucide="${iconName}" class="w-4 h-4 shrink-0"></i>
+        <span>${escapeHtml(message)}</span>
+      `;
+
+      container.appendChild(toast);
+      lucide.createIcons({ props: { searchTarget: toast } });
+
+      setTimeout(() => {
+        toast.style.opacity = '0';
+        toast.style.transform = 'translateY(10px)';
+        setTimeout(() => toast.remove(), 300);
+      }, 2800);
+    }
+
+    function escapeHtml(str) {
+      return str.replace(/[&<>"']/g, (m) => {
+        return {
+          '&': '&amp;',
+          '<': '&lt;',
+          '>': '&gt;',
+          '"': '&quot;',
+          "'": '&#039;'
+        }[m];
+      });
+    }
+
+    // --- Custom Modal System ---
+
+    let modalConfirmCallback = null;
+
+    function openModal({ title, icon = 'edit', contentHtml, confirmText = '確認', confirmClass = 'hh-btn-primary', onConfirm }) {
+      const overlay = document.getElementById('modalOverlay');
+      const card = document.getElementById('modalContent');
+      const titleEl = document.getElementById('modalTitle');
+      const bodyEl = document.getElementById('modalBody');
+      const confirmBtn = document.getElementById('btnModalConfirm');
+
+      titleEl.innerHTML = `<i data-lucide="${icon}" class="w-5 h-5"></i> <span>${escapeHtml(title)}</span>`;
+      bodyEl.innerHTML = contentHtml;
+      
+      confirmBtn.textContent = confirmText;
+      confirmBtn.className = `px-5 py-2 text-xs font-black ${confirmClass}`;
+
+      modalConfirmCallback = onConfirm;
+
+      overlay.classList.remove('opacity-0', 'pointer-events-none');
+      card.classList.remove('scale-95');
+      card.classList.add('scale-100');
+
+      lucide.createIcons({ props: { searchTarget: titleEl } });
+
+      const firstInput = bodyEl.querySelector('input');
+      if (firstInput) {
+        setTimeout(() => firstInput.focus(), 50);
+      }
+    }
+
+    function closeModal() {
+      const overlay = document.getElementById('modalOverlay');
+      const card = document.getElementById('modalContent');
+      
+      overlay.classList.add('opacity-0', 'pointer-events-none');
+      card.classList.remove('scale-100');
+      card.classList.add('scale-95');
+      modalConfirmCallback = null;
+    }
+
+    // --- Rendering Engines ---
+
+    function renderAll() {
+      validateStateDefensive();
+      renderSubjects();
+      renderRanges();
+      renderLinks();
+      updateMobileTabsVisibility();
+      lucide.createIcons();
+    }
+
+    // Column 1: Subjects
+    function renderSubjects() {
+      const container = document.getElementById('subjectList');
+      container.innerHTML = '';
+
+      if (state.subjects.length === 0) {
+        container.innerHTML = `
+          <div class="text-center py-8 px-4 text-[var(--hh-paragraph)] opacity-60">
+            <i data-lucide="book-open-check" class="w-8 h-8 mx-auto mb-2 opacity-50"></i>
+            <p class="text-xs font-bold">尚無科目資料<br>點擊上方按鈕新增</p>
+          </div>
+        `;
+        return;
+      }
+
+      state.subjects.forEach(sub => {
+        const isActive = sub.id === state.activeSubjectId;
+        const totalRanges = sub.ranges ? sub.ranges.length : 0;
+        
+        const item = document.createElement('div');
+        item.className = `group flex items-center justify-between p-3 rounded-xl cursor-pointer transition-all duration-150 border-2 ${
+          isActive 
+            ? 'hh-card-active font-black border-[var(--hh-card-border)]' 
+            : 'bg-[var(--hh-card)] border-[var(--hh-card-border)] hover:border-[var(--hh-card-hover-border)]'
+        }`;
+        
+        item.onclick = (e) => {
+          if (e.target.closest('.btn-delete-subject')) return;
+          state.activeSubjectId = sub.id;
+          state.activeRangeId = sub.ranges && sub.ranges.length > 0 ? sub.ranges[0].id : null;
+          saveState();
+          renderAll();
+        };
+
+        item.innerHTML = `
+          <div class="flex items-center gap-2.5 overflow-hidden">
+            <i data-lucide="folder" class="w-4 h-4 text-[var(--hh-headline)] shrink-0"></i>
+            <span class="text-xs font-bold hh-headline truncate">${escapeHtml(sub.name)}</span>
+          </div>
+          <div class="flex items-center gap-2 shrink-0">
+            <span class="hh-badge px-2 py-0.5 text-[10px] rounded-full">
+              ${totalRanges} 範圍
+            </span>
+            <button class="btn-delete-subject p-1.5 text-slate-400 hover:text-rose-600 rounded-lg hover:bg-rose-50 border border-transparent hover:border-rose-300 transition" title="刪除科目">
+              <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+            </button>
+          </div>
+        `;
+
+        item.querySelector('.btn-delete-subject').onclick = (e) => {
+          e.stopPropagation();
+          promptDeleteSubject(sub);
+        };
+
+        container.appendChild(item);
+      });
+    }
+
+    // Column 2: Ranges
+    function renderRanges() {
+      const container = document.getElementById('rangeList');
+      const btnAddRange = document.getElementById('btnAddRange');
+      container.innerHTML = '';
+
+      const activeSubject = getActiveSubject();
+
+      if (!activeSubject) {
+        btnAddRange.disabled = true;
+        container.innerHTML = `
+          <div class="text-center py-8 px-4 text-[var(--hh-paragraph)] opacity-60">
+            <i data-lucide="arrow-left-circle" class="w-8 h-8 mx-auto mb-2 opacity-50"></i>
+            <p class="text-xs font-bold">請先選取左側科目</p>
+          </div>
+        `;
+        return;
+      }
+
+      btnAddRange.disabled = false;
+
+      if (!activeSubject.ranges || activeSubject.ranges.length === 0) {
+        container.innerHTML = `
+          <div class="text-center py-8 px-4 text-[var(--hh-paragraph)] opacity-60">
+            <i data-lucide="bookmark-plus" class="w-8 h-8 mx-auto mb-2 opacity-50"></i>
+            <p class="text-xs font-bold">「${escapeHtml(activeSubject.name)}」尚無單元範圍<br>點擊上方按鈕新增</p>
+          </div>
+        `;
+        return;
+      }
+
+      activeSubject.ranges.forEach(rng => {
+        const isActive = rng.id === state.activeRangeId;
+        const totalLinks = rng.links ? rng.links.length : 0;
+
+        const item = document.createElement('div');
+        item.className = `group flex items-center justify-between p-3 rounded-xl cursor-pointer transition-all duration-150 border-2 ${
+          isActive 
+            ? 'hh-card-active font-black border-[var(--hh-card-border)]' 
+            : 'bg-[var(--hh-card)] border-[var(--hh-card-border)] hover:border-[var(--hh-card-hover-border)]'
+        }`;
+
+        item.onclick = (e) => {
+          if (e.target.closest('.btn-delete-range')) return;
+          state.activeRangeId = rng.id;
+          saveState();
+          renderAll();
+          if (window.innerWidth <= 1024) {
+            currentMobileTab = 'links';
+            updateMobileTabsVisibility();
+          }
+        };
+
+        item.innerHTML = `
+          <div class="flex items-center gap-2.5 overflow-hidden">
+            <i data-lucide="bookmark" class="w-4 h-4 text-[var(--hh-headline)] shrink-0"></i>
+            <span class="text-xs font-bold hh-headline truncate">${escapeHtml(rng.name)}</span>
+          </div>
+          <div class="flex items-center gap-2 shrink-0">
+            <span class="hh-badge px-2 py-0.5 text-[10px] rounded-full">
+              ${totalLinks} 連結
+            </span>
+            <button class="btn-delete-range p-1.5 text-slate-400 hover:text-rose-600 rounded-lg hover:bg-rose-50 border border-transparent hover:border-rose-300 transition" title="刪除範圍">
+              <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+            </button>
+          </div>
+        `;
+
+        item.querySelector('.btn-delete-range').onclick = (e) => {
+          e.stopPropagation();
+          promptDeleteRange(rng);
+        };
+
+        container.appendChild(item);
+      });
+    }
+
+    // Column 3: Links
+    function renderLinks() {
+      const container = document.getElementById('linkList');
+      const breadcrumb = document.getElementById('breadcrumbNav');
+      const titleEl = document.getElementById('currentRangeTitle');
+      const badgeEl = document.getElementById('linkCountBadge');
+      const addFormCard = document.getElementById('addLinkFormCard');
+
+      container.innerHTML = '';
+
+      const activeSubject = getActiveSubject();
+      const activeRange = getActiveRange();
+
+      if (!activeSubject || !activeRange) {
+        breadcrumb.innerHTML = `<span>未選取狀態</span>`;
+        titleEl.innerHTML = `<span class="opacity-60">請先選取學習單元範圍</span>`;
+        badgeEl.textContent = `0 個連結`;
+        addFormCard.classList.add('hidden');
+
+        container.innerHTML = `
+          <div class="h-64 flex flex-col items-center justify-center text-center p-6 text-[var(--hh-paragraph)] opacity-70">
+            <div class="w-14 h-14 rounded-2xl bg-[var(--hh-accent-ice)] border-2 border-[var(--hh-card-border)] flex items-center justify-center mb-3">
+              <i data-lucide="mouse-pointer-click" class="w-7 h-7 hh-headline"></i>
+            </div>
+            <h4 class="text-sm font-black hh-headline mb-1">未選擇學習範圍</h4>
+            <p class="text-xs font-semibold max-w-xs">請點選科目與單元範圍以展開並管理相關的複習連結。</p>
+          </div>
+        `;
+        return;
+      }
+
+      breadcrumb.innerHTML = `
+        <span class="font-extrabold text-[var(--hh-headline)]">${escapeHtml(activeSubject.name)}</span>
+        <i data-lucide="chevron-right" class="w-3.5 h-3.5"></i>
+        <span class="font-bold text-[var(--hh-paragraph)]">${escapeHtml(activeRange.name)}</span>
+      `;
+
+      titleEl.innerHTML = `<span>${escapeHtml(activeRange.name)}</span>`;
+      
+      const links = activeRange.links || [];
+      badgeEl.textContent = `${links.length} 個連結`;
+      addFormCard.classList.remove('hidden');
+
+      if (links.length === 0) {
+        container.innerHTML = `
+          <div class="h-48 flex flex-col items-center justify-center text-center p-6 rounded-xl border-2 border-dashed border-[var(--hh-card-border)] bg-[var(--hh-card)] text-[var(--hh-paragraph)] opacity-80">
+            <i data-lucide="external-link" class="w-7 h-7 mb-2 opacity-50"></i>
+            <p class="text-xs font-bold">該單元內尚無連結，請使用上方表單新增講義或影片網址。</p>
+          </div>
+        `;
+        return;
+      }
+
+      links.forEach(lnk => {
+        const card = document.createElement('div');
+        card.className = 'hh-card p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 group';
+
+        const safeUrl = escapeHtml(lnk.url);
+
+        card.innerHTML = `
+          <div class="flex items-start gap-3 overflow-hidden">
+            <div class="w-10 h-10 rounded-xl bg-[var(--hh-accent-ice)] border-2 border-[var(--hh-card-border)] flex items-center justify-center text-[var(--hh-headline)] shrink-0 mt-0.5 sm:mt-0 shadow-xs">
+              <i data-lucide="globe" class="w-5 h-5"></i>
+            </div>
+            <div class="overflow-hidden">
+              <h5 class="text-sm font-black hh-headline truncate">
+                ${escapeHtml(lnk.title)}
+              </h5>
+              <a href="${safeUrl}" target="_blank" rel="noopener noreferrer" class="text-xs font-bold text-[var(--hh-paragraph)] opacity-80 hover:opacity-100 transition-opacity truncate block flex items-center gap-1 mt-0.5">
+                <span class="truncate">${safeUrl}</span>
+                <i data-lucide="external-link" class="w-3.5 h-3.5 shrink-0"></i>
+              </a>
+            </div>
+          </div>
+
+          <div class="flex items-center gap-2 shrink-0 self-end sm:self-center pt-2 sm:pt-0 border-t-2 sm:border-t-0 border-[var(--hh-card-border)]/20 w-full sm:w-auto justify-end">
+            <a href="${safeUrl}" target="_blank" rel="noopener noreferrer" class="hh-btn-primary px-3 py-1.5 text-xs flex items-center gap-1">
+              <i data-lucide="external-link" class="w-3.5 h-3.5"></i>
+              <span>開啟</span>
+            </a>
+            
+            <button class="btn-copy-link hh-btn-secondary px-3 py-1.5 text-xs flex items-center gap-1" title="複製連結網址">
+              <i data-lucide="copy" class="w-3.5 h-3.5"></i>
+              <span>複製</span>
+            </button>
+
+            <button class="btn-delete-link p-2 text-slate-400 hover:text-rose-600 rounded-lg hover:bg-rose-50 border border-transparent hover:border-rose-300 transition" title="刪除連結">
+              <i data-lucide="trash-2" class="w-4 h-4"></i>
+            </button>
+          </div>
+        `;
+
+        card.querySelector('.btn-copy-link').onclick = () => {
+          navigator.clipboard.writeText(lnk.url).then(() => {
+            showToast('已成功複製網址至剪貼簿！', 'success');
+          }).catch(err => {
+            showToast('複製失敗', 'danger');
+          });
+        };
+
+        card.querySelector('.btn-delete-link').onclick = () => {
+          promptDeleteLink(lnk);
+        };
+
+        container.appendChild(card);
+      });
+    }
+
+    // --- Action Handlers & Dialog Prompts ---
+
+    // 1. Add Subject
+    function promptAddSubject() {
+      openModal({
+        title: '新增學習科目',
+        icon: 'folder-plus',
+        contentHtml: `
+          <div>
+            <label class="block text-xs font-black hh-headline mb-1.5">科目名稱</label>
+            <input type="text" id="modalInputSubject" placeholder="例如: 國文, 物理, 程式設計" class="w-full px-3.5 py-2 text-xs font-bold hh-input">
+          </div>
+        `,
+        confirmText: '建立科目',
+        onConfirm: () => {
+          const input = document.getElementById('modalInputSubject');
+          const val = input ? input.value.trim() : '';
+          if (!val) {
+            showToast('請輸入有效的科目名稱', 'danger');
+            return;
+          }
+          const newSub = {
+            id: generateId('sub'),
+            name: val,
+            ranges: []
+          };
+          state.subjects.push(newSub);
+          state.activeSubjectId = newSub.id;
+          state.activeRangeId = null;
+          saveState();
+          renderAll();
+          closeModal();
+          showToast(`已建立科目「${val}」`, 'success');
+        }
+      });
+    }
+
+    // 2. Delete Subject
+    function promptDeleteSubject(sub) {
+      openModal({
+        title: '刪除科目確認',
+        icon: 'alert-triangle',
+        confirmClass: 'hh-btn-primary !bg-rose-500 !text-white',
+        confirmText: '確認刪除',
+        contentHtml: `
+          <p class="text-xs font-bold">
+            確定要刪除科目 <strong class="text-rose-600">「${escapeHtml(sub.name)}」</strong> 嗎？<br>
+            <span class="opacity-75 text-[11px]">這將一併刪除該科目內的所有單元範圍與學習連結！</span>
+          </p>
+        `,
+        onConfirm: () => {
+          state.subjects = state.subjects.filter(s => s.id !== sub.id);
+          if (state.activeSubjectId === sub.id) {
+            state.activeSubjectId = state.subjects.length > 0 ? state.subjects[0].id : null;
+            state.activeRangeId = null;
+          }
+          saveState();
+          renderAll();
+          closeModal();
+          showToast(`已刪除科目「${sub.name}」`, 'info');
+        }
+      });
+    }
+
+    // 3. Add Range
+    function promptAddRange() {
+      const activeSubject = getActiveSubject();
+      if (!activeSubject) return;
+
+      openModal({
+        title: `新增單元範圍 (${activeSubject.name})`,
+        icon: 'bookmark-plus',
+        contentHtml: `
+          <div>
+            <label class="block text-xs font-black hh-headline mb-1.5">單元範圍名稱</label>
+            <input type="text" id="modalInputRange" placeholder="例如: 第一章 基礎概念, B1 物質的組成" class="w-full px-3.5 py-2 text-xs font-bold hh-input">
+          </div>
+        `,
+        confirmText: '建立單元',
+        onConfirm: () => {
+          const input = document.getElementById('modalInputRange');
+          const val = input ? input.value.trim() : '';
+          if (!val) {
+            showToast('請輸入有效的單元名稱', 'danger');
+            return;
+          }
+          const newRange = {
+            id: generateId('rng'),
+            name: val,
+            links: []
+          };
+          if (!activeSubject.ranges) activeSubject.ranges = [];
+          activeSubject.ranges.push(newRange);
+          state.activeRangeId = newRange.id;
+          saveState();
+          renderAll();
+          closeModal();
+          showToast(`已新增單元範圍「${val}」`, 'success');
+        }
+      });
+    }
+
+    // 4. Delete Range
+    function promptDeleteRange(rng) {
+      const activeSub = getActiveSubject();
+      openModal({
+        title: '刪除單元範圍確認',
+        icon: 'alert-triangle',
+        confirmClass: 'hh-btn-primary !bg-rose-500 !text-white',
+        confirmText: '確認刪除',
+        contentHtml: `
+          <p class="text-xs font-bold">
+            確定要刪除單元範圍 <strong class="text-rose-600">「${escapeHtml(rng.name)}」</strong> 嗎？<br>
+            <span class="opacity-75 text-[11px]">該單元內的所有學習連結將一併刪除。</span>
+          </p>
+        `,
+        onConfirm: () => {
+          if (activeSub && activeSub.ranges) {
+            activeSub.ranges = activeSub.ranges.filter(r => r.id !== rng.id);
+            if (state.activeRangeId === rng.id) {
+              state.activeRangeId = activeSub.ranges.length > 0 ? activeSub.ranges[0].id : null;
+            }
+          }
+          saveState();
+          renderAll();
+          closeModal();
+          showToast(`已刪除單元範圍「${rng.name}」`, 'info');
+        }
+      });
+    }
+
+    // 5. Add Link (Form Submission)
+    function handleAddLink(e) {
+      e.preventDefault();
+      const titleInput = document.getElementById('linkTitleInput');
+      const urlInput = document.getElementById('linkUrlInput');
+
+      const title = titleInput.value.trim();
+      const rawUrl = urlInput.value.trim();
+
+      if (!title || !rawUrl) {
+        showToast('請完整填寫連結名稱與網址', 'danger');
+        return;
+      }
+
+      const activeRange = getActiveRange();
+      if (!activeRange) {
+        showToast('請先選取有效的單元範圍', 'danger');
+        return;
+      }
+
+      const normalized = normalizeUrl(rawUrl);
+
+      const newLink = {
+        id: generateId('lnk'),
+        title: title,
+        url: normalized
+      };
+
+      if (!activeRange.links) activeRange.links = [];
+      activeRange.links.push(newLink);
+
+      saveState();
+      renderAll();
+
+      titleInput.value = '';
+      urlInput.value = '';
+      showToast(`已新增學習連結「${title}」`, 'success');
+    }
+
+    // 6. Delete Link
+    function promptDeleteLink(lnk) {
+      const activeRange = getActiveRange();
+      openModal({
+        title: '刪除連結確認',
+        icon: 'alert-triangle',
+        confirmClass: 'hh-btn-primary !bg-rose-500 !text-white',
+        confirmText: '刪除連結',
+        contentHtml: `
+          <p class="text-xs font-bold">
+            確定要刪除學習連結 <strong class="text-rose-600">「${escapeHtml(lnk.title)}」</strong> 嗎？
+          </p>
+        `,
+        onConfirm: () => {
+          if (activeRange && activeRange.links) {
+            activeRange.links = activeRange.links.filter(l => l.id !== lnk.id);
+          }
+          saveState();
+          renderAll();
+          closeModal();
+          showToast('已刪除學習連結', 'info');
+        }
+      });
+    }
+
+    // --- JSON Backup Export & Import & Reset ---
+
+    function exportBackupJson() {
+      const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(state, null, 2));
+      const downloadAnchor = document.createElement('a');
+      downloadAnchor.setAttribute("href", dataStr);
+      downloadAnchor.setAttribute("download", `study_dashboard_backup_${new Date().toISOString().slice(0,10)}.json`);
+      document.body.appendChild(downloadAnchor);
+      downloadAnchor.click();
+      downloadAnchor.remove();
+      showToast('資料備份 JSON 檔案已下載', 'success');
+    }
+
+    function importBackupJson(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        try {
+          const imported = JSON.parse(e.target.result);
+          if (imported && Array.isArray(imported.subjects)) {
+            state = imported;
+            validateStateDefensive();
+            saveState();
+            renderAll();
+            showToast('學習資料已成功匯入與復原！', 'success');
+          } else {
+            showToast('JSON 格式無效：未包含有效的 subjects 陣列', 'danger');
+          }
+        } catch (err) {
+          console.error(err);
+          showToast('讀取 JSON 備份檔失敗，請確認檔案格式', 'danger');
+        }
+        event.target.value = '';
+      };
+      reader.readAsText(file);
+    }
+
+    function promptResetSeed() {
+      openModal({
+        title: '重置範例資料確認',
+        icon: 'rotate-ccw',
+        confirmClass: 'hh-btn-primary !bg-amber-500 !text-slate-900',
+        confirmText: '重置範例',
+        contentHtml: `
+          <p class="text-xs font-bold">
+            重置後將覆蓋目前的學習科目與連結，並載入預設的示範資料。<br>
+            <span class="opacity-75 text-[11px]">建議可先執行「匯出」下載備份檔。</span>
+          </p>
+        `,
+        onConfirm: () => {
+          state = JSON.parse(JSON.stringify(INITIAL_SEED));
+          saveState();
+          renderAll();
+          closeModal();
+          showToast('已重置為預設範例資料', 'info');
+        }
+      });
+    }
+
+    // --- iPad 11" Simulator Logic ---
+
+    function setIpadSimMode(mode) {
+      ipadSimMode = mode;
+      const frame = document.getElementById('ipadFrameContainer');
+      const controls = document.getElementById('ipadSimControlsBar');
+      const btnText = document.getElementById('ipadSimBtnText');
+      const btnPortrait = document.getElementById('btnIpadPortrait');
+      const btnLandscape = document.getElementById('btnIpadLandscape');
+
+      frame.classList.remove('active-ipad-portrait', 'active-ipad-landscape');
+
+      if (mode === 'portrait') {
+        frame.classList.add('active-ipad-portrait');
+        controls.classList.remove('hidden');
+        btnText.textContent = '11" iPad: 直立 (834px)';
+        btnPortrait.classList.remove('opacity-60');
+        btnLandscape.classList.add('opacity-60');
+      } else if (mode === 'landscape') {
+        frame.classList.add('active-ipad-landscape');
+        controls.classList.remove('hidden');
+        btnText.textContent = '11" iPad: 橫向 (1194px)';
+        btnLandscape.classList.remove('opacity-60');
+        btnPortrait.classList.add('opacity-60');
+      } else {
+        controls.classList.add('hidden');
+        btnText.textContent = '11" iPad 視角: 預設';
+      }
+
+      updateMobileTabsVisibility();
+    }
+
+    function toggleIpadSim() {
+      if (ipadSimMode === 'default') {
+        setIpadSimMode('portrait');
+      } else if (ipadSimMode === 'portrait') {
+        setIpadSimMode('landscape');
+      } else {
+        setIpadSimMode('default');
+      }
+    }
+
+    // --- Mobile / iPad Portrait Navigation Tabs ---
+
+    function setMobileTab(tabName) {
+      currentMobileTab = tabName;
+      updateMobileTabsVisibility();
+    }
+
+    function updateMobileTabsVisibility() {
+      const navBtn = document.getElementById('tabBtnNav');
+      const linksBtn = document.getElementById('tabBtnLinks');
+      const navWrapper = document.getElementById('navColumnsWrapper');
+      const linksWrapper = document.getElementById('linksColumnWrapper');
+
+      const isCompactView = (window.innerWidth <= 1024) || (ipadSimMode === 'portrait');
+
+      if (!isCompactView) {
+        // Desktop / iPad Landscape View: Show everything side by side
+        navWrapper.classList.remove('hidden');
+        linksWrapper.classList.remove('hidden');
+        return;
+      }
+
+      // Compact iPad Portrait View Mode
+      if (currentMobileTab === 'nav') {
+        navWrapper.classList.remove('hidden');
+        linksWrapper.classList.add('hidden');
+        
+        navBtn.classList.add('bg-[var(--hh-btn-main)]', 'text-[var(--hh-btn-text)]', 'shadow-sm');
+        navBtn.classList.remove('text-[var(--hh-paragraph)]');
+        
+        linksBtn.classList.remove('bg-[var(--hh-btn-main)]', 'text-[var(--hh-btn-text)]', 'shadow-sm');
+        linksBtn.classList.add('text-[var(--hh-paragraph)]');
+      } else {
+        navWrapper.classList.add('hidden');
+        linksWrapper.classList.remove('hidden');
+        
+        linksBtn.classList.add('bg-[var(--hh-btn-main)]', 'text-[var(--hh-btn-text)]', 'shadow-sm');
+        linksBtn.classList.remove('text-[var(--hh-paragraph)]');
+        
+        navBtn.classList.remove('bg-[var(--hh-btn-main)]', 'text-[var(--hh-btn-text)]', 'shadow-sm');
+        navBtn.classList.add('text-[var(--hh-paragraph)]');
+      }
+    }
+
+    // --- DOM Event Listeners ---
+
+    document.addEventListener('DOMContentLoaded', () => {
+      loadState();
+      renderAll();
+
+      // Theme Switcher Event
+      const themeNamesMap = {
+        sage: '🌿 舒緩森林綠色調 (放鬆眼肌首選)',
+        dusk: '🌙 柔和夜讀色調 (低藍光防刺眼)',
+        sunny: '☀️ 陽光活力黃色調',
+        midnight: '⚡ 夜間霓虹暗色調'
+      };
+      document.getElementById('themeSelector').addEventListener('change', (e) => {
+        const val = e.target.value;
+        setTheme(val);
+        const label = themeNamesMap[val] || val;
+        showToast(`已切換為：${label}`, 'info');
+      });
+
+      // iPad Sim Event Controls
+      document.getElementById('btnToggleIpadSim').addEventListener('click', toggleIpadSim);
+      document.getElementById('btnIpadPortrait').addEventListener('click', () => setIpadSimMode('portrait'));
+      document.getElementById('btnIpadLandscape').addEventListener('click', () => setIpadSimMode('landscape'));
+      document.getElementById('btnCloseIpadSim').addEventListener('click', () => setIpadSimMode('default'));
+
+      // iPad Portrait Tabs Event Controls
+      document.getElementById('tabBtnNav').addEventListener('click', () => setMobileTab('nav'));
+      document.getElementById('tabBtnLinks').addEventListener('click', () => setMobileTab('links'));
+
+      // Window Resize Handler for iPad Viewport Adaptation
+      window.addEventListener('resize', updateMobileTabsVisibility);
+
+      // Subject / Range Add Buttons
+      document.getElementById('btnAddSubject').addEventListener('click', promptAddSubject);
+      document.getElementById('btnAddRange').addEventListener('click', promptAddRange);
+
+      // Link Form Submit
+      document.getElementById('linkForm').addEventListener('submit', handleAddLink);
+
+      // Backup Actions
+      document.getElementById('btnExport').addEventListener('click', exportBackupJson);
+      document.getElementById('btnImportTrigger').addEventListener('click', () => {
+        document.getElementById('importFileInput').click();
+      });
+      document.getElementById('importFileInput').addEventListener('change', importBackupJson);
+      document.getElementById('btnResetSeed').addEventListener('click', promptResetSeed);
+
+      // Modal Bindings
+      document.getElementById('btnModalClose').addEventListener('click', closeModal);
+      document.getElementById('btnModalCancel').addEventListener('click', closeModal);
+      document.getElementById('btnModalConfirm').addEventListener('click', () => {
+        if (modalConfirmCallback) modalConfirmCallback();
+      });
+      document.getElementById('modalOverlay').addEventListener('click', (e) => {
+        if (e.target === document.getElementById('modalOverlay')) closeModal();
+      });
+
+      document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') closeModal();
+      });
+    });
+  </script>
+</body>
+</html>
