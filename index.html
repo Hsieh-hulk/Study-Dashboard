@@ -515,6 +515,8 @@
     const STORAGE_KEY = 'study_agent_db_v4';
     const THEME_KEY = 'happyhues_theme_setting';
     const SUPABASE_CONFIG_KEY = 'study_dashboard_supabase_cfg';
+    const DEFAULT_SUPABASE_URL = 'https://svupitaqiblqgvfbzblm.supabase.co';
+    const DEFAULT_SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InN2dXBpdGFxaWJscWd2ZmJ6YmxtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODUyMzQyNzYsImV4cCI6MjEwMDgxMDI3Nn0.DgliAnfFAZYcBGsHP5D_OYqrxgAzWoSyj9ncKc3rod4';
 
     // Seed Initial Sample Data
     const INITIAL_SEED = {
@@ -560,28 +562,37 @@
 
     function initSupabase() {
       try {
+        let url = DEFAULT_SUPABASE_URL;
+        let key = DEFAULT_SUPABASE_KEY;
+
         const storedCfg = localStorage.getItem(SUPABASE_CONFIG_KEY);
         if (storedCfg) {
-          const { url, key } = JSON.parse(storedCfg);
-          if (url && key && typeof supabase !== 'undefined') {
-            supabaseClient = supabase.createClient(url, key);
-            checkSupabaseSession();
-
-            supabaseClient.auth.onAuthStateChange((event, session) => {
-              if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
-                checkSupabaseSession();
-              } else if (event === 'SIGNED_OUT') {
-                currentUser = null;
-                myGroups = [];
-                currentDashboardContext = 'personal';
-                renderAuthPill();
-                renderDashboardContextOptions();
-                loadState();
-                renderAll();
-              }
-            });
-            return;
+          const parsed = JSON.parse(storedCfg);
+          if (parsed && parsed.url && parsed.key) {
+            url = parsed.url;
+            key = parsed.key;
           }
+        }
+
+        if (url && key && typeof supabase !== 'undefined') {
+          url = url.replace(/\/rest\/v1\/?$/, '').replace(/\/+$/, '');
+          supabaseClient = supabase.createClient(url, key);
+          checkSupabaseSession();
+
+          supabaseClient.auth.onAuthStateChange((event, session) => {
+            if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
+              checkSupabaseSession();
+            } else if (event === 'SIGNED_OUT') {
+              currentUser = null;
+              myGroups = [];
+              currentDashboardContext = 'personal';
+              renderAuthPill();
+              renderDashboardContextOptions();
+              loadState();
+              renderAll();
+            }
+          });
+          return;
         }
       } catch (err) {
         console.warn('Supabase config not set or invalid:', err);
@@ -1278,7 +1289,9 @@
     }
 
     function promptSupabaseConfigModal() {
-      const storedCfg = JSON.parse(localStorage.getItem(SUPABASE_CONFIG_KEY) || '{"url":"","key":""}');
+      const storedCfg = JSON.parse(localStorage.getItem(SUPABASE_CONFIG_KEY) || '{}');
+      const currentUrl = storedCfg.url || DEFAULT_SUPABASE_URL;
+      const currentKey = storedCfg.key || DEFAULT_SUPABASE_KEY;
 
       openModal({
         title: 'Supabase 專案連線設定',
@@ -1287,11 +1300,11 @@
           <div class="space-y-3">
             <div>
               <label class="block text-xs font-black hh-headline mb-1">Supabase Project URL</label>
-              <input type="text" id="inputSupaUrl" value="${escapeHtml(storedCfg.url || '')}" placeholder="https://your-project.supabase.co" class="w-full px-3 py-2 text-xs font-mono hh-input">
+              <input type="text" id="inputSupaUrl" value="${escapeHtml(currentUrl)}" placeholder="https://your-project.supabase.co" class="w-full px-3 py-2 text-xs font-mono hh-input">
             </div>
             <div>
               <label class="block text-xs font-black hh-headline mb-1">Supabase Anon Public Key</label>
-              <input type="password" id="inputSupaKey" value="${escapeHtml(storedCfg.key || '')}" placeholder="eyJhbGciOi..." class="w-full px-3 py-2 text-xs font-mono hh-input">
+              <input type="password" id="inputSupaKey" value="${escapeHtml(currentKey)}" placeholder="eyJhbGciOi..." class="w-full px-3 py-2 text-xs font-mono hh-input">
             </div>
             <p class="text-[11px] font-semibold text-[var(--hh-paragraph)] opacity-75">
               提示：填入金鑰即可啟用正式的 Google 登入與線上 Supabase 雲端資料庫。
@@ -1300,8 +1313,12 @@
         `,
         confirmText: '儲存與連線',
         onConfirm: () => {
-          const url = document.getElementById('inputSupaUrl').value.trim();
+          let url = document.getElementById('inputSupaUrl').value.trim();
           const key = document.getElementById('inputSupaKey').value.trim();
+
+          if (url) {
+            url = url.replace(/\/rest\/v1\/?$/, '').replace(/\/+$/, '');
+          }
 
           if (url && key) {
             localStorage.setItem(SUPABASE_CONFIG_KEY, JSON.stringify({ url, key }));
