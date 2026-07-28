@@ -29,11 +29,9 @@
 6. **全域搜尋系統 (`Ctrl + K`)**
    - 支援全域快捷鍵 `Ctrl + K` 呼叫 Modal 搜尋，可即時過濾科目、單元與連結，鍵盤 `↑` `↓` `Enter` 快速切換。
 
-7. **4 大護眼與繽紛主題 (Happy Hues Design System)**
+7. **雙重護眼主題 (Happy Hues Design System)**
    - 🌿 舒緩森林 (Sage Green - 放鬆眼肌首選)
    - 🌙 柔和夜讀 (Dusk Dark Mode)
-   - ☀️ 陽光活力 (Sunny Yellow)
-   - ⚡ 夜間霓虹 (Midnight Neon)
 
 ---
 

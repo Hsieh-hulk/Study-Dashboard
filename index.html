@@ -41,7 +41,7 @@
     
     /* 1. Focus Sage Green (🌿 舒緩森林 - 沉穩耐看，大幅降低眼睛疲勞感) */
     :root[data-theme="sage"] {
-      --hh-bg: #f1f5f2;
+      --hh-bg: #e8f0ec;
       --hh-headline: #1b382b;
       --hh-paragraph: #2d4c3e;
       --hh-card: #ffffff;
@@ -51,10 +51,10 @@
       --hh-btn-main-hover: #354f52;
       --hh-btn-text: #ffffff;
       --hh-accent-blush: #cad2c5;
-      --hh-accent-ice: #e8f0ec;
+      --hh-accent-ice: #d4e5db;
       --hh-accent-teal: #84a59d;
       --hh-shadow: #1b382b;
-      --hh-badge-bg: #e8f0ec;
+      --hh-badge-bg: #d4e5db;
       --hh-badge-text: #1b382b;
       --hh-input-bg: #ffffff;
     }
@@ -79,45 +79,7 @@
       --hh-input-bg: #1a1c23;
     }
 
-    /* 3. Sunny Day (☀️ 陽光黃 - 活力經典) */
-    :root[data-theme="sunny"] {
-      --hh-bg: #fffffe;
-      --hh-headline: #272343;
-      --hh-paragraph: #2d334a;
-      --hh-card: #ffffff;
-      --hh-card-border: #272343;
-      --hh-card-hover-border: #ffd803;
-      --hh-btn-main: #ffd803;
-      --hh-btn-main-hover: #f3ca00;
-      --hh-btn-text: #272343;
-      --hh-accent-blush: #eebbc3;
-      --hh-accent-ice: #e3f6f5;
-      --hh-accent-teal: #bae8e8;
-      --hh-shadow: #272343;
-      --hh-badge-bg: #e3f6f5;
-      --hh-badge-text: #272343;
-      --hh-input-bg: #ffffff;
-    }
 
-    /* 4. Midnight Neon (⚡ 夜間霓虹 - 極致高對比暗色) */
-    :root[data-theme="midnight"] {
-      --hh-bg: #0f0e17;
-      --hh-headline: #fffffe;
-      --hh-paragraph: #a7a9be;
-      --hh-card: #16161a;
-      --hh-card-border: #72757e;
-      --hh-card-hover-border: #ff8906;
-      --hh-btn-main: #ff8906;
-      --hh-btn-main-hover: #e57800;
-      --hh-btn-text: #fffffe;
-      --hh-accent-blush: #f25f4c;
-      --hh-accent-ice: #2cb67d;
-      --hh-accent-teal: #72757e;
-      --hh-shadow: #000000;
-      --hh-badge-bg: #282536;
-      --hh-badge-text: #ff8906;
-      --hh-input-bg: #0f0e17;
-    }
 
     /* Base Body Applying Happy Hues Palette */
     body {
@@ -182,6 +144,63 @@
     .hh-btn-primary:active {
       transform: translate(2px, 2px);
       box-shadow: 1px 1px 0px 0px var(--hh-shadow);
+    }
+
+    /* Custom Radio Dot & Preset Option Card Styling */
+    .preset-mode-card {
+      background-color: var(--hh-card);
+      border: 2.5px solid var(--hh-card-border);
+      box-shadow: 3px 3px 0px 0px var(--hh-shadow);
+      border-radius: 14px;
+      padding: 0.75rem 0.85rem;
+      cursor: pointer;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .preset-mode-card:hover {
+      border-color: var(--hh-btn-main);
+      transform: translateY(-2px);
+      box-shadow: 4px 4px 0px 0px var(--hh-shadow);
+    }
+    .preset-mode-card:has(input[type="radio"]:checked) {
+      border-color: var(--hh-btn-main);
+      background-color: var(--hh-accent-ice);
+      box-shadow: 0 0 0 2px var(--hh-btn-main), 3px 3px 0px 0px var(--hh-shadow);
+    }
+    .preset-radio-dot {
+      appearance: none;
+      -webkit-appearance: none;
+      width: 1.25rem;
+      height: 1.25rem;
+      border: 2px solid var(--hh-card-border);
+      border-radius: 50%;
+      outline: none;
+      display: grid;
+      place-content: center;
+      background-color: var(--hh-card);
+      transition: all 0.15s ease-in-out;
+      cursor: pointer;
+      flex-shrink: 0;
+      margin: 0;
+    }
+    .preset-radio-dot::before {
+      content: "";
+      width: 0.65rem;
+      height: 0.65rem;
+      border-radius: 50%;
+      transform: scale(0);
+      transition: 0.15s transform ease-in-out;
+      background-color: var(--hh-btn-main);
+    }
+    .preset-radio-dot:checked {
+      border-color: var(--hh-btn-main);
+      border-width: 2.5px;
+      background-color: var(--hh-card);
+    }
+    .preset-radio-dot:checked::before {
+      transform: scale(1);
     }
 
     .hh-btn-secondary {
@@ -309,8 +328,6 @@
         <select id="themeSelector" class="hh-input px-3 py-1.5 text-xs font-bold rounded-xl cursor-pointer shadow-sm pr-8" title="切換色調">
           <option value="sage">🌿 舒緩森林</option>
           <option value="dusk">🌙 柔和夜讀</option>
-          <option value="sunny">☀️ 陽光活力</option>
-          <option value="midnight">⚡ 夜間霓虹</option>
         </select>
       </div>
 
@@ -485,7 +502,7 @@
 
   <!-- Reusable Custom Modal -->
   <div id="modalOverlay" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4 opacity-0 pointer-events-none transition-opacity duration-200">
-    <div id="modalContent" class="hh-card w-full max-w-md p-6 bg-white transform scale-95 transition-transform duration-200">
+    <div id="modalContent" class="hh-card w-full max-w-md p-6 bg-[var(--hh-card)] transform scale-95 transition-transform duration-200">
       
       <div class="flex items-center justify-between mb-4 pb-3 border-b-2 border-[var(--hh-card-border)]">
         <h3 id="modalTitle" class="text-base font-black hh-headline flex items-center gap-2">
@@ -917,7 +934,7 @@
 
       // Load Theme (Default to 'sage' eye-care reading mode)
       const savedTheme = localStorage.getItem(THEME_KEY) || 'sage';
-      const validThemes = ['sage', 'dusk', 'sunny', 'midnight'];
+      const validThemes = ['sage', 'dusk'];
       if (!validThemes.includes(savedTheme)) {
         setTheme('sage');
         document.getElementById('themeSelector').value = 'sage';
@@ -1104,33 +1121,33 @@
             </p>
 
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-3" id="presetModeOptions">
-              <label class="hh-card p-3 border-2 border-[var(--hh-card-border)] hover:border-[var(--hh-headline)] cursor-pointer flex flex-col justify-between transition-all group">
+              <label class="preset-mode-card group">
                 <div class="flex items-center gap-2 mb-1">
-                  <input type="radio" name="presetModeRadio" value="junior" ${currentMode === 'junior' ? 'checked' : ''} class="accent-[var(--hh-headline)]">
+                  <input type="radio" name="presetModeRadio" value="junior" ${currentMode === 'junior' ? 'checked' : ''} class="preset-radio-dot">
                   <span class="font-extrabold text-xs hh-headline">🎒 國中模式</span>
                 </div>
                 <p class="text-[10px] text-[var(--hh-paragraph)] opacity-80 leading-tight font-medium">國、英、數、物、理化、生、地科、歷、地、公民 (10科)</p>
               </label>
 
-              <label class="hh-card p-3 border-2 border-[var(--hh-card-border)] hover:border-[var(--hh-headline)] cursor-pointer flex flex-col justify-between transition-all group">
+              <label class="preset-mode-card group">
                 <div class="flex items-center gap-2 mb-1">
-                  <input type="radio" name="presetModeRadio" value="senior" ${currentMode === 'senior' ? 'checked' : ''} class="accent-[var(--hh-headline)]">
+                  <input type="radio" name="presetModeRadio" value="senior" ${currentMode === 'senior' ? 'checked' : ''} class="preset-radio-dot">
                   <span class="font-extrabold text-xs hh-headline">🏫 高中模式</span>
                 </div>
                 <p class="text-[10px] text-[var(--hh-paragraph)] opacity-80 leading-tight font-medium">國、英、數、物、化、生、地科、歷、地、公民 (10科)</p>
               </label>
 
-              <label class="hh-card p-3 border-2 border-[var(--hh-card-border)] hover:border-[var(--hh-headline)] cursor-pointer flex flex-col justify-between transition-all group">
+              <label class="preset-mode-card group">
                 <div class="flex items-center gap-2 mb-1">
-                  <input type="radio" name="presetModeRadio" value="vocational" ${currentMode === 'vocational' ? 'checked' : ''} class="accent-[var(--hh-headline)]">
+                  <input type="radio" name="presetModeRadio" value="vocational" ${currentMode === 'vocational' ? 'checked' : ''} class="preset-radio-dot">
                   <span class="font-extrabold text-xs hh-headline">🛠️ 高職模式</span>
                 </div>
                 <p class="text-[10px] text-[var(--hh-paragraph)] opacity-80 leading-tight font-medium">國文、英文、數學、專一、專二 (5科)</p>
               </label>
 
-              <label class="hh-card p-3 border-2 border-[var(--hh-card-border)] hover:border-[var(--hh-headline)] cursor-pointer flex flex-col justify-between transition-all group">
+              <label class="preset-mode-card group">
                 <div class="flex items-center gap-2 mb-1">
-                  <input type="radio" name="presetModeRadio" value="university" ${currentMode === 'university' ? 'checked' : ''} class="accent-[var(--hh-headline)]">
+                  <input type="radio" name="presetModeRadio" value="university" ${currentMode === 'university' ? 'checked' : ''} class="preset-radio-dot">
                   <span class="font-extrabold text-xs hh-headline">🎓 大學模式</span>
                 </div>
                 <p class="text-[10px] text-[var(--hh-paragraph)] opacity-80 leading-tight font-medium">預設空白，可自由手動新增專業科系科目</p>
@@ -2503,9 +2520,7 @@
       // Theme Switcher Event
       const themeNamesMap = {
         sage: '🌿 舒緩森林綠色調 (放鬆眼肌首選)',
-        dusk: '🌙 柔和夜讀色調 (低藍光防刺眼)',
-        sunny: '☀️ 陽光活力黃色調',
-        midnight: '⚡ 夜間霓虹暗色調'
+        dusk: '🌙 柔和夜讀色調 (低藍光防刺眼)'
       };
       document.getElementById('themeSelector').addEventListener('change', (e) => {
         const val = e.target.value;
