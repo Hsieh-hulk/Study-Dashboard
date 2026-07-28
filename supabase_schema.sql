@@ -9,8 +9,10 @@ CREATE TABLE IF NOT EXISTS public.profiles (
   email TEXT,
   nickname TEXT NOT NULL,
   avatar_url TEXT,
+  current_preset_mode TEXT DEFAULT 'senior',
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
+ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS current_preset_mode TEXT DEFAULT 'senior';
 
 -- 2. Groups 表格 (學習群組)
 CREATE TABLE IF NOT EXISTS public.groups (
@@ -47,8 +49,10 @@ CREATE TABLE IF NOT EXISTS public.subjects (
   name TEXT NOT NULL,
   user_id UUID REFERENCES public.profiles(id) ON DELETE CASCADE, -- 個人看板用
   group_id UUID REFERENCES public.groups(id) ON DELETE CASCADE,   -- 群組看板用
+  preset_mode TEXT DEFAULT 'senior',                             -- 預設學制模式隔離
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
+ALTER TABLE public.subjects ADD COLUMN IF NOT EXISTS preset_mode TEXT DEFAULT 'senior';
 
 -- 6. Ranges 表格 (單元範圍)
 CREATE TABLE IF NOT EXISTS public.ranges (

@@ -1,0 +1,17 @@
+{
+  "name": "study-dashboard",
+  "version": "1.0.0",
+  "description": "Happy Hues Edition + Supabase Study Dashboard",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js"
+  },
+  "keywords": [
+    "study-dashboard",
+    "supabase",
+    "happy-hues"
+  ],
+  "author": "",
+  "license": "ISC"
+}
