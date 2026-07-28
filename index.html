@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>學習資料管理 Dashboard | Happy Hues Edition</title>
-  <meta name="description" content="Happy Hues 繽紛風格 - 自訂學習資料與複習連結管理系統。">
+  <meta name="description" content="Happy Hues 繽紛風格 - 自訂學習資料與複習連結管理系統 (支援 Supabase 雲端多群組與個人檔案)">
   
   <!-- Google Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -32,6 +32,9 @@
   
   <!-- Lucide Icons -->
   <script src="https://unpkg.com/lucide@latest"></script>
+
+  <!-- Supabase JS Client CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
   <style>
     /* --- HAPPY HUES & STUDY FOCUS DESIGN SYSTEM THEMES --- */
@@ -96,8 +99,7 @@
       --hh-input-bg: #ffffff;
     }
 
-    /* 6. Mint Fresh (🍃 清新薄荷 - 爽朗綠意) */
-    /* 7. Midnight Neon (⚡ 夜間霓虹 - 極致高對比暗色) */
+    /* 4. Midnight Neon (⚡ 夜間霓虹 - 極致高對比暗色) */
     :root[data-theme="midnight"] {
       --hh-bg: #0f0e17;
       --hh-headline: #fffffe;
@@ -167,7 +169,7 @@
       box-shadow: 3px 3px 0px 0px var(--hh-shadow);
       font-weight: 700;
       border-radius: 12px;
-      min-height: 44px; /* iPad Touch Friendly */
+      min-height: 44px;
       transition: all 0.15s ease;
     }
 
@@ -189,7 +191,7 @@
       box-shadow: 3px 3px 0px 0px var(--hh-shadow);
       font-weight: 600;
       border-radius: 12px;
-      min-height: 44px; /* iPad Touch Friendly */
+      min-height: 44px;
       transition: all 0.15s ease;
     }
 
@@ -209,7 +211,7 @@
       border: 2px solid var(--hh-card-border);
       color: var(--hh-headline);
       border-radius: 10px;
-      min-height: 44px; /* iPad Touch Friendly */
+      min-height: 44px;
       box-shadow: inset 2px 2px 0px rgba(0,0,0,0.05);
     }
 
@@ -228,12 +230,6 @@
       color: var(--hh-badge-text);
       border: 1.5px solid var(--hh-card-border);
       font-weight: 700;
-    }
-
-    /* iPad 11-inch Viewport Specific Adjustments */
-    .ipad-touch-target {
-      min-height: 44px;
-      min-width: 44px;
     }
 
     /* Keyframe Animations */
@@ -270,59 +266,63 @@
       </div>
       <div>
         <h1 class="text-lg lg:text-xl font-black tracking-tight hh-headline">Study Dashboard</h1>
-        <p class="text-xs font-semibold text-[var(--hh-paragraph)] opacity-85">自訂學習資料管理系統</p>
+        <p class="text-xs font-semibold text-[var(--hh-paragraph)] opacity-85">Supabase 雲端多群組版</p>
       </div>
     </div>
 
-    <!-- Central Search Icon & Trigger Button -->
-    <div class="flex-1 max-w-md mx-auto order-last md:order-none w-full md:w-auto flex justify-center">
-      <button id="btnOpenSearch" class="w-full max-w-xs sm:max-w-sm hh-btn-secondary px-3.5 py-2 text-xs font-bold flex items-center justify-between gap-2 shadow-sm transition hover:scale-[1.02] active:scale-[0.98]" title="搜尋學習科目、單元與連結 (Ctrl + K)">
+    <!-- Central Dashboard Context Selector & Search -->
+    <div class="flex-1 max-w-xl mx-auto order-last md:order-none w-full md:w-auto flex flex-col sm:flex-row items-center gap-2 justify-center">
+      
+      <!-- Dashboard Switcher Select -->
+      <div class="relative w-full sm:w-auto">
+        <select id="dashboardContextSelect" class="w-full hh-input px-3.5 py-2 text-xs font-black rounded-xl cursor-pointer shadow-sm pr-8 bg-[var(--hh-accent-ice)]">
+          <option value="personal">🔒 個人雲端 Dashboard</option>
+          <optgroup label="👥 我的學習群組" id="groupOptGroup">
+            <!-- Dynamically Rendered -->
+          </optgroup>
+          <optgroup label="⚙️ 群組操作">
+            <option value="action_create_group">➕ 建立新群組...</option>
+            <option value="action_join_group">🔑 輸入邀請碼加入群組...</option>
+            <option value="action_manage_groups">⚙️ 群組成員與審核管理...</option>
+          </optgroup>
+        </select>
+      </div>
+
+      <!-- Search Trigger Button -->
+      <button id="btnOpenSearch" class="w-full sm:flex-1 hh-btn-secondary px-3.5 py-2 text-xs font-bold flex items-center justify-between gap-2 shadow-sm transition hover:scale-[1.02] active:scale-[0.98]" title="搜尋學習科目、單元與連結 (Ctrl + K)">
         <div class="flex items-center gap-2 text-[var(--hh-paragraph)] opacity-80 overflow-hidden">
           <i data-lucide="search" class="w-4 h-4 text-[var(--hh-headline)] shrink-0"></i>
-          <span class="truncate">搜尋科目、單元與連結...</span>
+          <span class="truncate">搜尋科目與連結...</span>
         </div>
         <kbd class="hidden sm:inline-flex items-center gap-0.5 px-2 py-0.5 text-[10px] font-mono font-bold rounded-md bg-[var(--hh-accent-ice)] text-[var(--hh-headline)] border border-[var(--hh-card-border)] shadow-xs shrink-0">
           <span>Ctrl</span><span>K</span>
         </kbd>
       </button>
+
     </div>
 
-    <!-- Controls & Actions -->
+    <!-- Controls & Auth Profile Area -->
     <div class="flex flex-wrap items-center gap-2 sm:gap-3">
       
       <!-- Theme Switcher Selector -->
       <div class="relative flex items-center">
-        <span class="text-xs font-bold mr-1.5 hidden sm:inline hh-headline">🎨 讀書色調:</span>
-        <select id="themeSelector" class="hh-input px-3 py-1.5 text-xs font-bold rounded-xl cursor-pointer shadow-sm pr-8">
-          <option value="sage">🌿 舒緩森林 (護眼防疲勞推薦)</option>
-          <option value="dusk">🌙 柔和夜讀 (晚間低藍光)</option>
-          <option value="sunny">☀️ 陽光活力 (明亮黃)</option>
-          <option value="midnight">⚡ 夜間霓虹 (極致暗色)</option>
+        <select id="themeSelector" class="hh-input px-3 py-1.5 text-xs font-bold rounded-xl cursor-pointer shadow-sm pr-8" title="切換色調">
+          <option value="sage">🌿 舒緩森林</option>
+          <option value="dusk">🌙 柔和夜讀</option>
+          <option value="sunny">☀️ 陽光活力</option>
+          <option value="midnight">⚡ 夜間霓虹</option>
         </select>
       </div>
 
-      <!-- Backup Export / Import / Reset -->
-      <div class="flex items-center gap-1.5">
-        <button id="btnExport" class="hh-btn-secondary px-3 py-2 text-xs font-bold flex items-center gap-1" title="匯出 JSON 備份檔">
-          <i data-lucide="download" class="w-4 h-4"></i>
-          <span class="hidden sm:inline">匯出</span>
-        </button>
-
-        <button id="btnImportTrigger" class="hh-btn-secondary px-3 py-2 text-xs font-bold flex items-center gap-1" title="匯入 JSON 備份檔">
-          <i data-lucide="upload" class="w-4 h-4"></i>
-          <span class="hidden sm:inline">匯入</span>
-        </button>
-        <input type="file" id="importFileInput" accept=".json" class="hidden" />
-
-        <button id="btnResetSeed" class="hh-btn-secondary px-2.5 py-2 text-xs font-bold hover:text-rose-600" title="重置範例資料">
-          <i data-lucide="rotate-ccw" class="w-4 h-4"></i>
-        </button>
+      <!-- User Auth & Profile Pill -->
+      <div id="authPillContainer" class="flex items-center gap-1.5">
+        <!-- JS Rendered (Login button OR Avatar + Profile Menu) -->
       </div>
 
     </div>
   </header>
 
-  <!-- iPad Portrait Mobile Segmented Tab Switcher (Visible on iPad Portrait / Small Screen) -->
+  <!-- iPad / Mobile Segmented Tab Switcher -->
   <div class="lg:hidden max-w-7xl w-full mx-auto px-4 pt-4">
     <div class="grid grid-cols-2 gap-2 p-1.5 rounded-xl border-2 border-[var(--hh-card-border)] bg-[var(--hh-card)] shadow-sm">
       <button id="tabBtnNav" class="py-2 text-xs font-bold rounded-lg border-2 border-transparent bg-[var(--hh-btn-main)] text-[var(--hh-btn-text)] shadow-sm flex items-center justify-center gap-1.5">
@@ -514,6 +514,7 @@
     // Storage Keys
     const STORAGE_KEY = 'study_agent_db_v4';
     const THEME_KEY = 'happyhues_theme_setting';
+    const SUPABASE_CONFIG_KEY = 'study_dashboard_supabase_cfg';
 
     // Seed Initial Sample Data
     const INITIAL_SEED = {
@@ -540,8 +541,263 @@
       activeRangeId: null
     };
 
+    // Active Dashboard Context ('personal' OR groupId)
+    let currentDashboardContext = 'personal';
+
+    // User Profile State
+    let currentUser = null; // { id, email, nickname, avatarUrl }
+    let myGroups = []; // Array of groups user belongs to
+    let pendingJoinRequests = []; // Pending join requests for groups user owns
+
     // Mobile/iPad Tab State ('nav' or 'links')
     let currentMobileTab = 'nav';
+
+    // Supabase Client & Realtime Handles
+    let supabaseClient = null;
+    let realtimeChannel = null;
+
+    // --- Supabase Client & Cloud Sync Engine ---
+
+    function initSupabase() {
+      try {
+        const storedCfg = localStorage.getItem(SUPABASE_CONFIG_KEY);
+        if (storedCfg) {
+          const { url, key } = JSON.parse(storedCfg);
+          if (url && key && typeof supabase !== 'undefined') {
+            supabaseClient = supabase.createClient(url, key);
+            checkSupabaseSession();
+
+            supabaseClient.auth.onAuthStateChange((event, session) => {
+              if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
+                checkSupabaseSession();
+              } else if (event === 'SIGNED_OUT') {
+                currentUser = null;
+                myGroups = [];
+                currentDashboardContext = 'personal';
+                renderAuthPill();
+                renderDashboardContextOptions();
+                loadState();
+                renderAll();
+              }
+            });
+            return;
+          }
+        }
+      } catch (err) {
+        console.warn('Supabase config not set or invalid:', err);
+      }
+      renderAuthPill();
+    }
+
+    async function checkSupabaseSession() {
+      if (!supabaseClient) {
+        loadState();
+        renderAll();
+        return;
+      }
+      try {
+        const { data: { session } } = await supabaseClient.auth.getSession();
+        if (session && session.user) {
+          await loadUserProfile(session.user);
+          await loadUserGroups();
+          await loadDashboardData();
+          setupRealtimeSubscription();
+        } else {
+          currentUser = null;
+          loadState();
+          renderAll();
+        }
+      } catch (err) {
+        console.error('Failed to get session', err);
+        loadState();
+        renderAll();
+      }
+      renderAuthPill();
+    }
+
+    async function loadDashboardData() {
+      if (!supabaseClient || !currentUser) {
+        loadState();
+        renderAll();
+        return;
+      }
+
+      try {
+        let query = supabaseClient.from('subjects').select('*, ranges(*, resource_links(*))');
+        if (currentDashboardContext === 'personal') {
+          query = query.eq('user_id', currentUser.id).is('group_id', null);
+        } else {
+          query = query.eq('group_id', currentDashboardContext);
+        }
+
+        const { data, error } = await query;
+        if (error) throw error;
+
+        if (data && data.length > 0) {
+          state.subjects = data.map(sub => ({
+            id: sub.id,
+            name: sub.name,
+            user_id: sub.user_id,
+            group_id: sub.group_id,
+            ranges: (sub.ranges || []).map(rng => ({
+              id: rng.id,
+              name: rng.name,
+              subject_id: rng.subject_id,
+              links: (rng.resource_links || []).map(lnk => ({
+                id: lnk.id,
+                title: lnk.title,
+                url: lnk.url,
+                range_id: lnk.range_id,
+                created_by: lnk.created_by
+              }))
+            }))
+          }));
+        } else if (currentDashboardContext === 'personal') {
+          // Automatic seeding for brand new personal dashboard
+          const seedPayload = INITIAL_SEED.subjects.map(s => ({
+            name: s.name,
+            user_id: currentUser.id,
+            group_id: null
+          }));
+          const { data: insertedSubs } = await supabaseClient.from('subjects').insert(seedPayload).select('*, ranges(*, resource_links(*))');
+          if (insertedSubs) {
+            state.subjects = insertedSubs.map(sub => ({
+              id: sub.id,
+              name: sub.name,
+              ranges: []
+            }));
+          } else {
+            state.subjects = [];
+          }
+        } else {
+          state.subjects = [];
+        }
+
+        validateStateDefensive();
+        renderAll();
+      } catch (err) {
+        console.error('Failed to load dashboard data from Supabase:', err);
+        showToast('雲端資料讀取失敗，使用本機暫存資料', 'danger');
+        loadState();
+        renderAll();
+      }
+    }
+
+    function setupRealtimeSubscription() {
+      if (!supabaseClient) return;
+
+      if (realtimeChannel) {
+        supabaseClient.removeChannel(realtimeChannel);
+        realtimeChannel = null;
+      }
+
+      const chanName = `rt_ctx_${currentDashboardContext}_${Date.now()}`;
+      realtimeChannel = supabaseClient.channel(chanName)
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'subjects' }, () => loadDashboardData())
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'ranges' }, () => loadDashboardData())
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'resource_links' }, () => loadDashboardData())
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'group_join_requests' }, () => loadUserGroups())
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'group_members' }, () => loadUserGroups())
+        .subscribe();
+    }
+
+    async function loadUserProfile(authUser) {
+      if (!supabaseClient) return;
+      try {
+        let { data: profile, error } = await supabaseClient
+          .from('profiles')
+          .select('*')
+          .eq('id', authUser.id)
+          .single();
+
+        if (error || !profile) {
+          // Create default profile from authUser meta
+          const nickname = authUser.user_metadata?.full_name || authUser.email?.split('@')[0] || '學習者';
+          const avatarUrl = authUser.user_metadata?.avatar_url || 'https://api.dicebear.com/7.x/bottts/svg?seed=' + authUser.id;
+          
+          const newProfile = {
+            id: authUser.id,
+            email: authUser.email,
+            nickname: nickname,
+            avatar_url: avatarUrl
+          };
+          
+          await supabaseClient.from('profiles').upsert(newProfile);
+          currentUser = { id: authUser.id, email: authUser.email, nickname, avatarUrl };
+          promptProfileSetupModal(true); // Prompt onboarding
+        } else {
+          currentUser = {
+            id: profile.id,
+            email: profile.email || authUser.email,
+            nickname: profile.nickname || '學習者',
+            avatarUrl: profile.avatar_url || ('https://api.dicebear.com/7.x/bottts/svg?seed=' + profile.id)
+          };
+        }
+      } catch (err) {
+        console.error('Error loading profile', err);
+      }
+    }
+
+    async function loadUserGroups() {
+      if (!supabaseClient || !currentUser) return;
+      try {
+        // Fetch groups where user is a member
+        const { data: memberships } = await supabaseClient
+          .from('group_members')
+          .select('group_id, role, groups(*)')
+          .eq('user_id', currentUser.id);
+
+        if (memberships) {
+          myGroups = memberships.map(m => m.groups).filter(Boolean);
+        } else {
+          myGroups = [];
+        }
+
+        // Fetch pending requests for groups owned by user
+        const ownedGroupIds = myGroups.filter(g => g.owner_id === currentUser.id).map(g => g.id);
+        if (ownedGroupIds.length > 0) {
+          const { data: reqs } = await supabaseClient
+            .from('group_join_requests')
+            .select('*, profiles(*), groups(*)')
+            .in('group_id', ownedGroupIds)
+            .eq('status', 'pending');
+          pendingJoinRequests = reqs || [];
+        } else {
+          pendingJoinRequests = [];
+        }
+
+        renderDashboardContextOptions();
+      } catch (err) {
+        console.error('Failed loading groups', err);
+      }
+    }
+
+    function handleGoogleLogin() {
+      if (!supabaseClient) {
+        promptSupabaseConfigModal();
+        return;
+      }
+      supabaseClient.auth.signInWithOAuth({
+        provider: 'google',
+        options: { redirectTo: window.location.href }
+      }).catch(err => {
+        showToast('Google 登入連線失敗: ' + err.message, 'danger');
+      });
+    }
+
+    async function handleLogout() {
+      if (supabaseClient) {
+        await supabaseClient.auth.signOut();
+      }
+      currentUser = null;
+      myGroups = [];
+      currentDashboardContext = 'personal';
+      renderAuthPill();
+      renderDashboardContextOptions();
+      loadState();
+      renderAll();
+      showToast('已安全登出', 'info');
+    }
 
     // --- Core Data Initialization & Persistence ---
 
@@ -623,6 +879,10 @@
       return `${prefix}_${Date.now()}_${Math.random().toString(36).substr(2, 5)}`;
     }
 
+    function generateNumericInviteCode() {
+      return Math.floor(100000 + Math.random() * 900000).toString();
+    }
+
     function normalizeUrl(url) {
       let trimmed = url.trim();
       if (!/^https?:\/\//i.test(trimmed)) {
@@ -639,6 +899,423 @@
       const sub = getActiveSubject();
       if (!sub || !sub.ranges) return null;
       return sub.ranges.find(r => r.id === state.activeRangeId) || null;
+    }
+
+    // --- UI Renderers for Auth & Dashboard Switcher ---
+
+    function renderAuthPill() {
+      const container = document.getElementById('authPillContainer');
+      if (!container) return;
+
+      if (!currentUser) {
+        container.innerHTML = `
+          <button id="btnLogin" class="hh-btn-primary px-3 py-1.5 text-xs flex items-center gap-1.5">
+            <i data-lucide="log-in" class="w-4 h-4"></i>
+            <span>Google 登入</span>
+          </button>
+          <button id="btnConfigSupabase" class="hh-btn-secondary px-2.5 py-1.5 text-xs" title="設定 Supabase 金鑰">
+            <i data-lucide="settings" class="w-4 h-4"></i>
+          </button>
+        `;
+        document.getElementById('btnLogin').onclick = handleGoogleLogin;
+        document.getElementById('btnConfigSupabase').onclick = promptSupabaseConfigModal;
+      } else {
+        const notificationDot = pendingJoinRequests.length > 0 
+          ? `<span class="w-2.5 h-2.5 bg-rose-500 rounded-full animate-ping absolute -top-0.5 -right-0.5"></span><span class="w-2.5 h-2.5 bg-rose-500 rounded-full absolute -top-0.5 -right-0.5"></span>` 
+          : '';
+
+        container.innerHTML = `
+          <div class="relative group">
+            <button id="btnProfileMenu" class="hh-btn-secondary px-2.5 py-1 text-xs flex items-center gap-2 relative">
+              <img src="${escapeHtml(currentUser.avatarUrl)}" alt="Avatar" class="w-6 h-6 rounded-full border border-[var(--hh-card-border)] object-cover">
+              <span class="font-extrabold max-w-[90px] truncate hidden sm:inline">${escapeHtml(currentUser.nickname)}</span>
+              ${notificationDot}
+              <i data-lucide="chevron-down" class="w-3.5 h-3.5 opacity-70"></i>
+            </button>
+            <div class="hidden group-hover:block absolute right-0 top-full pt-1.5 w-48 z-50 animate-pop-in">
+              <div class="hh-card bg-[var(--hh-card)] p-2 shadow-xl border-2 space-y-1 text-xs font-bold">
+                <button id="menuEditProfile" class="w-full text-left px-3 py-2 rounded-lg hover:bg-[var(--hh-accent-ice)] flex items-center gap-2">
+                  <i data-lucide="user-cog" class="w-4 h-4"></i>
+                  <span>編輯個人資料</span>
+                </button>
+                <button id="menuManageGroups" class="w-full text-left px-3 py-2 rounded-lg hover:bg-[var(--hh-accent-ice)] flex items-center gap-2">
+                  <i data-lucide="users" class="w-4 h-4"></i>
+                  <span>群組管理與審核</span>
+                  ${pendingJoinRequests.length > 0 ? `<span class="ml-auto px-1.5 py-0.5 text-[9px] bg-rose-500 text-white rounded-full font-black">${pendingJoinRequests.length}</span>` : ''}
+                </button>
+                <button id="menuConfigSupabase" class="w-full text-left px-3 py-2 rounded-lg hover:bg-[var(--hh-accent-ice)] flex items-center gap-2 text-[var(--hh-paragraph)]">
+                  <i data-lucide="database" class="w-4 h-4"></i>
+                  <span>Supabase 連線設定</span>
+                </button>
+                <div class="border-t border-[var(--hh-card-border)] my-1"></div>
+                <button id="menuLogout" class="w-full text-left px-3 py-2 rounded-lg hover:bg-rose-50 text-rose-600 flex items-center gap-2">
+                  <i data-lucide="log-out" class="w-4 h-4"></i>
+                  <span>登出系統</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        `;
+
+        document.getElementById('menuEditProfile').onclick = () => promptProfileSetupModal(false);
+        document.getElementById('menuManageGroups').onclick = promptManageGroupsModal;
+        document.getElementById('menuConfigSupabase').onclick = promptSupabaseConfigModal;
+        document.getElementById('menuLogout').onclick = handleLogout;
+      }
+      lucide.createIcons({ props: { searchTarget: container } });
+    }
+
+    function renderDashboardContextOptions() {
+      const select = document.getElementById('dashboardContextSelect');
+      const optGroup = document.getElementById('groupOptGroup');
+      if (!optGroup) return;
+
+      optGroup.innerHTML = '';
+
+      if (myGroups.length === 0) {
+        const option = document.createElement('option');
+        option.disabled = true;
+        option.textContent = '尚未加入任何群組';
+        optGroup.appendChild(option);
+      } else {
+        myGroups.forEach(g => {
+          const option = document.createElement('option');
+          option.value = g.id;
+          option.textContent = `👥 ${g.name} (${g.invite_code})`;
+          optGroup.appendChild(option);
+        });
+      }
+
+      select.value = currentDashboardContext;
+    }
+
+    // --- Modals for Profile, Groups & Supabase Config ---
+
+    function promptProfileSetupModal(isOnboarding = false) {
+      const defaultNick = currentUser ? currentUser.nickname : '學習者';
+      const defaultAvatar = currentUser ? currentUser.avatarUrl : '';
+
+      openModal({
+        title: isOnboarding ? '歡迎！請完成個人資料設定' : '編輯個人檔案與頭像',
+        icon: 'user-circle',
+        contentHtml: `
+          <div class="space-y-4">
+            <div>
+              <label class="block text-xs font-black hh-headline mb-1.5">使用者暱稱</label>
+              <input type="text" id="inputNickname" value="${escapeHtml(defaultNick)}" required class="w-full px-3.5 py-2 text-xs font-bold hh-input">
+            </div>
+
+            <div>
+              <label class="block text-xs font-black hh-headline mb-1.5">選擇或貼上頭像網址</label>
+              <div class="flex gap-2 mb-2">
+                <input type="text" id="inputAvatarUrl" value="${escapeHtml(defaultAvatar)}" placeholder="https://..." class="flex-1 px-3.5 py-2 text-xs font-bold hh-input">
+                <button id="btnRandomAvatar" type="button" class="hh-btn-secondary px-3 py-2 text-xs font-bold">
+                  🎲 隨機產生
+                </button>
+              </div>
+            </div>
+          </div>
+        `,
+        confirmText: '儲存設定',
+        onConfirm: async () => {
+          const nickname = document.getElementById('inputNickname').value.trim();
+          const avatarUrl = document.getElementById('inputAvatarUrl').value.trim();
+
+          if (!nickname) {
+            showToast('請輸入暱稱', 'danger');
+            return;
+          }
+
+          if (currentUser) {
+            currentUser.nickname = nickname;
+            currentUser.avatarUrl = avatarUrl || ('https://api.dicebear.com/7.x/bottts/svg?seed=' + currentUser.id);
+
+            if (supabaseClient) {
+              await supabaseClient.from('profiles').upsert({
+                id: currentUser.id,
+                nickname: currentUser.nickname,
+                avatar_url: currentUser.avatarUrl
+              });
+            }
+          }
+
+          renderAuthPill();
+          closeModal();
+          showToast('個人檔案更新成功！', 'success');
+        }
+      });
+
+      document.getElementById('btnRandomAvatar').onclick = () => {
+        const seed = Math.random().toString(36).substring(7);
+        document.getElementById('inputAvatarUrl').value = `https://api.dicebear.com/7.x/bottts/svg?seed=${seed}`;
+      };
+    }
+
+    function promptCreateGroupModal() {
+      const code = generateNumericInviteCode();
+
+      openModal({
+        title: '建立全新學習群組',
+        icon: 'users',
+        contentHtml: `
+          <div class="space-y-4">
+            <div>
+              <label class="block text-xs font-black hh-headline mb-1.5">群組名稱</label>
+              <input type="text" id="inputGroupName" placeholder="例如: 高三學測國文衝刺組" required class="w-full px-3.5 py-2 text-xs font-bold hh-input">
+            </div>
+
+            <div>
+              <label class="block text-xs font-black hh-headline mb-1.5">專屬 6 位數數字邀請碼</label>
+              <div class="flex items-center gap-2">
+                <input type="text" id="inputGroupCode" value="${code}" readonly class="flex-1 px-3.5 py-2 text-sm font-mono font-black text-center hh-input bg-[var(--hh-accent-ice)]">
+                <button type="button" id="btnRefreshCode" class="hh-btn-secondary px-3 py-2 text-xs" title="重新產生號碼">
+                  <i data-lucide="rotate-cw" class="w-4 h-4"></i>
+                </button>
+              </div>
+              <p class="text-[11px] font-semibold text-[var(--hh-paragraph)] opacity-75 mt-1">其他人需輸入此數字邀請碼發送申請，經您核准後即可加入群組。</p>
+            </div>
+          </div>
+        `,
+        confirmText: '建立群組',
+        onConfirm: async () => {
+          const name = document.getElementById('inputGroupName').value.trim();
+          const invite_code = document.getElementById('inputGroupCode').value.trim();
+
+          if (!name) {
+            showToast('請輸入群組名稱', 'danger');
+            return;
+          }
+
+          const newGroup = {
+            id: generateId('grp'),
+            name,
+            invite_code,
+            owner_id: currentUser ? currentUser.id : 'local_owner',
+            created_at: new Date().toISOString()
+          };
+
+          if (supabaseClient && currentUser) {
+            const { data, error } = await supabaseClient.from('groups').insert(newGroup).select().single();
+            if (error) {
+              showToast('建立失敗: ' + error.message, 'danger');
+              return;
+            }
+            await supabaseClient.from('group_members').insert({
+              group_id: data.id,
+              user_id: currentUser.id,
+              role: 'owner'
+            });
+            myGroups.push(data);
+          } else {
+            myGroups.push(newGroup);
+          }
+
+          currentDashboardContext = newGroup.id;
+          renderDashboardContextOptions();
+          closeModal();
+          showToast(`成功建立群組「${name}」 (邀請碼: ${invite_code})`, 'success');
+        }
+      });
+
+      document.getElementById('btnRefreshCode').onclick = () => {
+        document.getElementById('inputGroupCode').value = generateNumericInviteCode();
+      };
+    }
+
+    function promptJoinGroupModal() {
+      openModal({
+        title: '輸入數字邀請碼申請加入群組',
+        icon: 'key-round',
+        contentHtml: `
+          <div class="space-y-4">
+            <div>
+              <label class="block text-xs font-black hh-headline mb-1.5">6 位數字邀請碼</label>
+              <input type="text" id="inputJoinCode" maxlength="6" placeholder="請輸入 6 位數字 (例如 839201)" required class="w-full px-3.5 py-2.5 text-base font-mono font-black text-center tracking-widest hh-input">
+            </div>
+            <p class="text-[11px] font-bold text-[var(--hh-paragraph)] opacity-75">
+              送出申請後需等待該群組管理員審核同意，同意後系統將自動為您解鎖該群組。
+            </p>
+          </div>
+        `,
+        confirmText: '送出加入申請',
+        onConfirm: async () => {
+          const code = document.getElementById('inputJoinCode').value.trim();
+          if (!code || code.length !== 6) {
+            showToast('請輸入正確的 6 位數邀請碼', 'danger');
+            return;
+          }
+
+          if (supabaseClient && currentUser) {
+            const { data: grp, error } = await supabaseClient.from('groups').select('*').eq('invite_code', code).single();
+            if (error || !grp) {
+              showToast('找不到與該邀請碼相符的群組，請確認號碼', 'danger');
+              return;
+            }
+
+            const isMember = myGroups.some(g => g.id === grp.id);
+            if (isMember) {
+              showToast(`您已經是群組「${grp.name}」的成員了！`, 'info');
+              closeModal();
+              return;
+            }
+
+            const { error: reqError } = await supabaseClient.from('group_join_requests').insert({
+              group_id: grp.id,
+              user_id: currentUser.id,
+              status: 'pending'
+            });
+
+            if (reqError) {
+              if (reqError.code === '23505') {
+                showToast(`您先前已向「${grp.name}」發送過加入申請，請等候審核！`, 'info');
+              } else {
+                showToast('發送申請失敗: ' + reqError.message, 'danger');
+              }
+              closeModal();
+              return;
+            }
+
+            closeModal();
+            showToast(`已向群組「${grp.name}」送出加入申請，等待管理員審核！`, 'success');
+          } else {
+            closeModal();
+            showToast(`已模擬發送「${code}」加入申請，等候審核中！`, 'info');
+          }
+        }
+      });
+    }
+
+    function promptManageGroupsModal() {
+      let pendingHtml = '';
+
+      if (pendingJoinRequests.length === 0) {
+        pendingHtml = `<p class="text-xs font-bold text-slate-400 py-3 text-center">目前無任何待審核加入申請</p>`;
+      } else {
+        pendingHtml = pendingJoinRequests.map(req => {
+          const nick = req.profiles ? req.profiles.nickname : '新使用者';
+          const avatar = req.profiles ? req.profiles.avatar_url : 'https://api.dicebear.com/7.x/bottts/svg?seed=user';
+          const grpName = req.groups ? req.groups.name : '群組';
+
+          return `
+            <div class="flex items-center justify-between p-2.5 rounded-xl border border-[var(--hh-card-border)] bg-[var(--hh-accent-ice)] mb-2">
+              <div class="flex items-center gap-2.5">
+                <img src="${escapeHtml(avatar)}" class="w-7 h-7 rounded-full object-cover border border-[var(--hh-card-border)]">
+                <div>
+                  <div class="font-extrabold text-xs text-[var(--hh-headline)]">${escapeHtml(nick)}</div>
+                  <div class="text-[10px] font-semibold text-[var(--hh-paragraph)] opacity-75">申請加入：${escapeHtml(grpName)}</div>
+                </div>
+              </div>
+              <div class="flex items-center gap-1.5">
+                <button class="btn-approve-req px-2.5 py-1 bg-emerald-600 text-white rounded-lg font-bold text-[11px]" data-id="${req.id}">同意</button>
+                <button class="btn-reject-req px-2.5 py-1 bg-rose-500 text-white rounded-lg font-bold text-[11px]" data-id="${req.id}">拒絕</button>
+              </div>
+            </div>
+          `;
+        }).join('');
+      }
+
+      openModal({
+        title: '群組管理與待審核申請名單',
+        icon: 'user-check',
+        contentHtml: `
+          <div class="space-y-4">
+            <div>
+              <h5 class="text-xs font-black hh-headline mb-2 uppercase flex items-center gap-1">
+                <i data-lucide="clock" class="w-4 h-4"></i>
+                <span>待審核加入申請 (${pendingJoinRequests.length})</span>
+              </h5>
+              <div class="max-h-48 overflow-y-auto pr-1">
+                ${pendingHtml}
+              </div>
+            </div>
+
+            <div>
+              <h5 class="text-xs font-black hh-headline mb-2 uppercase">我已加入的群組 (${myGroups.length})</h5>
+              <div class="space-y-1.5 max-h-36 overflow-y-auto pr-1 text-xs font-bold">
+                ${myGroups.map(g => `
+                  <div class="flex items-center justify-between p-2 rounded-lg border border-[var(--hh-card-border)] bg-[var(--hh-card)]">
+                    <span>👥 ${escapeHtml(g.name)}</span>
+                    <span class="font-mono text-[10px] bg-[var(--hh-accent-ice)] px-2 py-0.5 rounded border">碼: ${g.invite_code}</span>
+                  </div>
+                `).join('')}
+              </div>
+            </div>
+          </div>
+        `,
+        confirmText: '完成關閉',
+        onConfirm: () => closeModal()
+      });
+
+      document.querySelectorAll('.btn-approve-req').forEach(btn => {
+        btn.onclick = async (e) => {
+          const reqId = e.target.dataset.id;
+          const req = pendingJoinRequests.find(r => r.id === reqId);
+          if (req && supabaseClient) {
+            await supabaseClient.from('group_join_requests').update({ status: 'approved' }).eq('id', reqId);
+            await supabaseClient.from('group_members').insert({
+              group_id: req.group_id,
+              user_id: req.user_id,
+              role: 'member'
+            });
+            showToast('已審核同意加入申請！', 'success');
+            await loadUserGroups();
+            closeModal();
+          }
+        };
+      });
+
+      document.querySelectorAll('.btn-reject-req').forEach(btn => {
+        btn.onclick = async (e) => {
+          const reqId = e.target.dataset.id;
+          if (supabaseClient) {
+            await supabaseClient.from('group_join_requests').update({ status: 'rejected' }).eq('id', reqId);
+            showToast('已拒絕該申請', 'info');
+            await loadUserGroups();
+            closeModal();
+          }
+        };
+      });
+    }
+
+    function promptSupabaseConfigModal() {
+      const storedCfg = JSON.parse(localStorage.getItem(SUPABASE_CONFIG_KEY) || '{"url":"","key":""}');
+
+      openModal({
+        title: 'Supabase 專案連線設定',
+        icon: 'database',
+        contentHtml: `
+          <div class="space-y-3">
+            <div>
+              <label class="block text-xs font-black hh-headline mb-1">Supabase Project URL</label>
+              <input type="text" id="inputSupaUrl" value="${escapeHtml(storedCfg.url || '')}" placeholder="https://your-project.supabase.co" class="w-full px-3 py-2 text-xs font-mono hh-input">
+            </div>
+            <div>
+              <label class="block text-xs font-black hh-headline mb-1">Supabase Anon Public Key</label>
+              <input type="password" id="inputSupaKey" value="${escapeHtml(storedCfg.key || '')}" placeholder="eyJhbGciOi..." class="w-full px-3 py-2 text-xs font-mono hh-input">
+            </div>
+            <p class="text-[11px] font-semibold text-[var(--hh-paragraph)] opacity-75">
+              提示：填入金鑰即可啟用正式的 Google 登入與線上 Supabase 雲端資料庫。
+            </p>
+          </div>
+        `,
+        confirmText: '儲存與連線',
+        onConfirm: () => {
+          const url = document.getElementById('inputSupaUrl').value.trim();
+          const key = document.getElementById('inputSupaKey').value.trim();
+
+          if (url && key) {
+            localStorage.setItem(SUPABASE_CONFIG_KEY, JSON.stringify({ url, key }));
+            initSupabase();
+            showToast('Supabase 金鑰設定完成！正在初始化...', 'success');
+          } else {
+            localStorage.removeItem(SUPABASE_CONFIG_KEY);
+            supabaseClient = null;
+            renderAuthPill();
+            showToast('已切換為純本機單機模式', 'info');
+          }
+          closeModal();
+        }
+      });
     }
 
     // --- Toast Notification System ---
@@ -675,7 +1352,8 @@
     }
 
     function escapeHtml(str) {
-      return str.replace(/[&<>"']/g, (m) => {
+      if (!str) return '';
+      return String(str).replace(/[&<>"']/g, (m) => {
         return {
           '&': '&amp;',
           '<': '&lt;',
@@ -983,7 +1661,6 @@
 
     // --- Action Handlers & Dialog Prompts ---
 
-    // 1. Add Subject
     function promptAddSubject() {
       openModal({
         title: '新增學習科目',
@@ -995,22 +1672,39 @@
           </div>
         `,
         confirmText: '建立科目',
-        onConfirm: () => {
+        onConfirm: async () => {
           const input = document.getElementById('modalInputSubject');
           const val = input ? input.value.trim() : '';
           if (!val) {
             showToast('請輸入有效的科目名稱', 'danger');
             return;
           }
-          const newSub = {
-            id: generateId('sub'),
-            name: val,
-            ranges: []
-          };
-          state.subjects.push(newSub);
-          state.activeSubjectId = newSub.id;
-          state.activeRangeId = null;
-          saveState();
+
+          if (supabaseClient && currentUser) {
+            const insertPayload = currentDashboardContext === 'personal'
+              ? { name: val, user_id: currentUser.id, group_id: null }
+              : { name: val, user_id: null, group_id: currentDashboardContext };
+
+            const { data: newSub, error } = await supabaseClient.from('subjects').insert(insertPayload).select().single();
+            if (error) {
+              showToast('新增科目失敗: ' + error.message, 'danger');
+              return;
+            }
+            state.subjects.push({ id: newSub.id, name: newSub.name, ranges: [] });
+            state.activeSubjectId = newSub.id;
+            state.activeRangeId = null;
+          } else {
+            const newSub = {
+              id: generateId('sub'),
+              name: val,
+              ranges: []
+            };
+            state.subjects.push(newSub);
+            state.activeSubjectId = newSub.id;
+            state.activeRangeId = null;
+            saveState();
+          }
+
           renderAll();
           closeModal();
           showToast(`已建立科目「${val}」`, 'success');
@@ -1018,7 +1712,6 @@
       });
     }
 
-    // 2. Delete Subject
     function promptDeleteSubject(sub) {
       openModal({
         title: '刪除科目確認',
@@ -1031,13 +1724,23 @@
             <span class="opacity-75 text-[11px]">這將一併刪除該科目內的所有單元範圍與學習連結！</span>
           </p>
         `,
-        onConfirm: () => {
-          state.subjects = state.subjects.filter(s => s.id !== sub.id);
+        onConfirm: async () => {
+          if (supabaseClient && currentUser) {
+            const { error } = await supabaseClient.from('subjects').delete().eq('id', sub.id);
+            if (error) {
+              showToast('刪除科目失敗: ' + error.message, 'danger');
+              return;
+            }
+            state.subjects = state.subjects.filter(s => s.id !== sub.id);
+          } else {
+            state.subjects = state.subjects.filter(s => s.id !== sub.id);
+            saveState();
+          }
+
           if (state.activeSubjectId === sub.id) {
             state.activeSubjectId = state.subjects.length > 0 ? state.subjects[0].id : null;
             state.activeRangeId = null;
           }
-          saveState();
           renderAll();
           closeModal();
           showToast(`已刪除科目「${sub.name}」`, 'info');
@@ -1045,7 +1748,6 @@
       });
     }
 
-    // 3. Add Range
     function promptAddRange() {
       const activeSubject = getActiveSubject();
       if (!activeSubject) return;
@@ -1060,22 +1762,39 @@
           </div>
         `,
         confirmText: '建立單元',
-        onConfirm: () => {
+        onConfirm: async () => {
           const input = document.getElementById('modalInputRange');
           const val = input ? input.value.trim() : '';
           if (!val) {
             showToast('請輸入有效的單元名稱', 'danger');
             return;
           }
-          const newRange = {
-            id: generateId('rng'),
-            name: val,
-            links: []
-          };
-          if (!activeSubject.ranges) activeSubject.ranges = [];
-          activeSubject.ranges.push(newRange);
-          state.activeRangeId = newRange.id;
-          saveState();
+
+          if (supabaseClient && currentUser) {
+            const { data: newRng, error } = await supabaseClient.from('ranges').insert({
+              subject_id: activeSubject.id,
+              name: val
+            }).select().single();
+
+            if (error) {
+              showToast('新增單元失敗: ' + error.message, 'danger');
+              return;
+            }
+            if (!activeSubject.ranges) activeSubject.ranges = [];
+            activeSubject.ranges.push({ id: newRng.id, name: newRng.name, links: [] });
+            state.activeRangeId = newRng.id;
+          } else {
+            const newRange = {
+              id: generateId('rng'),
+              name: val,
+              links: []
+            };
+            if (!activeSubject.ranges) activeSubject.ranges = [];
+            activeSubject.ranges.push(newRange);
+            state.activeRangeId = newRange.id;
+            saveState();
+          }
+
           renderAll();
           closeModal();
           showToast(`已新增單元範圍「${val}」`, 'success');
@@ -1083,7 +1802,6 @@
       });
     }
 
-    // 4. Delete Range
     function promptDeleteRange(rng) {
       const activeSub = getActiveSubject();
       openModal({
@@ -1097,14 +1815,26 @@
             <span class="opacity-75 text-[11px]">該單元內的所有學習連結將一併刪除。</span>
           </p>
         `,
-        onConfirm: () => {
-          if (activeSub && activeSub.ranges) {
-            activeSub.ranges = activeSub.ranges.filter(r => r.id !== rng.id);
-            if (state.activeRangeId === rng.id) {
-              state.activeRangeId = activeSub.ranges.length > 0 ? activeSub.ranges[0].id : null;
+        onConfirm: async () => {
+          if (supabaseClient && currentUser) {
+            const { error } = await supabaseClient.from('ranges').delete().eq('id', rng.id);
+            if (error) {
+              showToast('刪除單元失敗: ' + error.message, 'danger');
+              return;
             }
+            if (activeSub && activeSub.ranges) {
+              activeSub.ranges = activeSub.ranges.filter(r => r.id !== rng.id);
+            }
+          } else {
+            if (activeSub && activeSub.ranges) {
+              activeSub.ranges = activeSub.ranges.filter(r => r.id !== rng.id);
+            }
+            saveState();
           }
-          saveState();
+
+          if (state.activeRangeId === rng.id) {
+            state.activeRangeId = (activeSub && activeSub.ranges && activeSub.ranges.length > 0) ? activeSub.ranges[0].id : null;
+          }
           renderAll();
           closeModal();
           showToast(`已刪除單元範圍「${rng.name}」`, 'info');
@@ -1112,8 +1842,7 @@
       });
     }
 
-    // 5. Add Link (Form Submission)
-    function handleAddLink(e) {
+    async function handleAddLink(e) {
       e.preventDefault();
       const titleInput = document.getElementById('linkTitleInput');
       const urlInput = document.getElementById('linkUrlInput');
@@ -1134,16 +1863,38 @@
 
       const normalized = normalizeUrl(rawUrl);
 
-      const newLink = {
-        id: generateId('lnk'),
-        title: title,
-        url: normalized
-      };
+      if (supabaseClient && currentUser) {
+        const { data: newLnk, error } = await supabaseClient.from('resource_links').insert({
+          range_id: activeRange.id,
+          title: title,
+          url: normalized,
+          created_by: currentUser.id
+        }).select().single();
 
-      if (!activeRange.links) activeRange.links = [];
-      activeRange.links.push(newLink);
+        if (error) {
+          showToast('新增連結失敗: ' + error.message, 'danger');
+          return;
+        }
 
-      saveState();
+        if (!activeRange.links) activeRange.links = [];
+        activeRange.links.push({
+          id: newLnk.id,
+          title: newLnk.title,
+          url: newLnk.url,
+          created_by: newLnk.created_by
+        });
+      } else {
+        const newLink = {
+          id: generateId('lnk'),
+          title: title,
+          url: normalized
+        };
+
+        if (!activeRange.links) activeRange.links = [];
+        activeRange.links.push(newLink);
+        saveState();
+      }
+
       renderAll();
 
       titleInput.value = '';
@@ -1151,7 +1902,6 @@
       showToast(`已新增學習連結「${title}」`, 'success');
     }
 
-    // 6. Delete Link
     function promptDeleteLink(lnk) {
       const activeRange = getActiveRange();
       openModal({
@@ -1164,11 +1914,23 @@
             確定要刪除學習連結 <strong class="text-rose-600">「${escapeHtml(lnk.title)}」</strong> 嗎？
           </p>
         `,
-        onConfirm: () => {
-          if (activeRange && activeRange.links) {
-            activeRange.links = activeRange.links.filter(l => l.id !== lnk.id);
+        onConfirm: async () => {
+          if (supabaseClient && currentUser) {
+            const { error } = await supabaseClient.from('resource_links').delete().eq('id', lnk.id);
+            if (error) {
+              showToast('刪除連結失敗: ' + error.message, 'danger');
+              return;
+            }
+            if (activeRange && activeRange.links) {
+              activeRange.links = activeRange.links.filter(l => l.id !== lnk.id);
+            }
+          } else {
+            if (activeRange && activeRange.links) {
+              activeRange.links = activeRange.links.filter(l => l.id !== lnk.id);
+            }
+            saveState();
           }
-          saveState();
+
           renderAll();
           closeModal();
           showToast('已刪除學習連結', 'info');
@@ -1176,68 +1938,7 @@
       });
     }
 
-    // --- JSON Backup Export & Import & Reset ---
-
-    function exportBackupJson() {
-      const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(state, null, 2));
-      const downloadAnchor = document.createElement('a');
-      downloadAnchor.setAttribute("href", dataStr);
-      downloadAnchor.setAttribute("download", `study_dashboard_backup_${new Date().toISOString().slice(0,10)}.json`);
-      document.body.appendChild(downloadAnchor);
-      downloadAnchor.click();
-      downloadAnchor.remove();
-      showToast('資料備份 JSON 檔案已下載', 'success');
-    }
-
-    function importBackupJson(event) {
-      const file = event.target.files[0];
-      if (!file) return;
-
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        try {
-          const imported = JSON.parse(e.target.result);
-          if (imported && Array.isArray(imported.subjects)) {
-            state = imported;
-            validateStateDefensive();
-            saveState();
-            renderAll();
-            showToast('學習資料已成功匯入與復原！', 'success');
-          } else {
-            showToast('JSON 格式無效：未包含有效的 subjects 陣列', 'danger');
-          }
-        } catch (err) {
-          console.error(err);
-          showToast('讀取 JSON 備份檔失敗，請確認檔案格式', 'danger');
-        }
-        event.target.value = '';
-      };
-      reader.readAsText(file);
-    }
-
-    function promptResetSeed() {
-      openModal({
-        title: '重置範例資料確認',
-        icon: 'rotate-ccw',
-        confirmClass: 'hh-btn-primary !bg-amber-500 !text-slate-900',
-        confirmText: '重置範例',
-        contentHtml: `
-          <p class="text-xs font-bold">
-            重置後將覆蓋目前的學習科目與連結，並載入預設的示範資料。<br>
-            <span class="opacity-75 text-[11px]">建議可先執行「匯出」下載備份檔。</span>
-          </p>
-        `,
-        onConfirm: () => {
-          state = JSON.parse(JSON.stringify(INITIAL_SEED));
-          saveState();
-          renderAll();
-          closeModal();
-          showToast('已重置為預設範例資料', 'info');
-        }
-      });
-    }
-
-    // --- Mobile / iPad Portrait Navigation Tabs ---
+    // --- Mobile / iPad Navigation Tabs ---
 
     function setMobileTab(tabName) {
       currentMobileTab = tabName;
@@ -1253,13 +1954,11 @@
       const isCompactView = (window.innerWidth <= 1024);
 
       if (!isCompactView) {
-        // Desktop / Wide View: Show everything side by side
         navWrapper.classList.remove('hidden');
         linksWrapper.classList.remove('hidden');
         return;
       }
 
-      // Compact View Mode
       if (currentMobileTab === 'nav') {
         navWrapper.classList.remove('hidden');
         linksWrapper.classList.add('hidden');
@@ -1281,7 +1980,7 @@
       }
     }
 
-    // --- Central Search & Instant Navigation System ---
+    // --- Central Search System ---
 
     let currentSearchResults = [];
     let selectedResultIndex = -1;
@@ -1299,9 +1998,7 @@
       document.getElementById('btnClearSearch').classList.add('hidden');
       performSearch('');
 
-      setTimeout(() => {
-        input.focus();
-      }, 50);
+      setTimeout(() => input.focus(), 50);
     }
 
     function closeSearchModal() {
@@ -1320,16 +2017,12 @@
       const btnClear = document.getElementById('btnClearSearch');
       const countEl = document.getElementById('searchResultCount');
 
-      if (q) {
-        btnClear.classList.remove('hidden');
-      } else {
-        btnClear.classList.add('hidden');
-      }
+      if (q) btnClear.classList.remove('hidden');
+      else btnClear.classList.add('hidden');
 
       currentSearchResults = [];
 
       state.subjects.forEach(sub => {
-        // 1. Match Subject
         if (!q || sub.name.toLowerCase().includes(q)) {
           currentSearchResults.push({
             type: 'subject',
@@ -1344,7 +2037,6 @@
 
         if (sub.ranges) {
           sub.ranges.forEach(rng => {
-            // 2. Match Range
             if (q && rng.name.toLowerCase().includes(q)) {
               currentSearchResults.push({
                 type: 'range',
@@ -1359,7 +2051,6 @@
 
             if (rng.links) {
               rng.links.forEach(lnk => {
-                // 3. Match Link
                 if (q && (lnk.title.toLowerCase().includes(q) || lnk.url.toLowerCase().includes(q))) {
                   currentSearchResults.push({
                     type: 'link',
@@ -1435,10 +2126,7 @@
           </div>
         `;
 
-        item.onclick = () => {
-          navigateToResult(res);
-        };
-
+        item.onclick = () => navigateToResult(res);
         item.onmouseenter = () => {
           selectedResultIndex = index;
           updateSearchResultHighlights();
@@ -1466,21 +2154,14 @@
 
     function navigateToResult(res) {
       if (!res) return;
-
       state.activeSubjectId = res.subjectId;
-      if (res.rangeId) {
-        state.activeRangeId = res.rangeId;
-      }
+      if (res.rangeId) state.activeRangeId = res.rangeId;
       
       saveState();
       
-      // iPad / Mobile Tab switch if compact screen
       if (window.innerWidth <= 1024) {
-        if (res.type === 'link' || res.type === 'range') {
-          currentMobileTab = 'links';
-        } else {
-          currentMobileTab = 'nav';
-        }
+        if (res.type === 'link' || res.type === 'range') currentMobileTab = 'links';
+        else currentMobileTab = 'nav';
       }
 
       renderAll();
@@ -1489,38 +2170,45 @@
       const subObj = state.subjects.find(s => s.id === res.subjectId);
       const subName = subObj ? subObj.name : '';
       showToast(`已跳轉至：「${subName}${res.title ? ' > ' + res.title : ''}」`, 'success');
-
-      // Scroll into view & pulse animation for better visual focus
-      setTimeout(() => {
-        if (res.type === 'link' && res.linkId) {
-          const linksCol = document.getElementById('linksColumnWrapper');
-          if (linksCol) {
-            linksCol.classList.add('animate-pulse-highlight');
-            setTimeout(() => linksCol.classList.remove('animate-pulse-highlight'), 1200);
-          }
-        } else if (res.type === 'range') {
-          const rangeCol = document.getElementById('rangeList');
-          if (rangeCol) {
-            rangeCol.classList.add('animate-pulse-highlight');
-            setTimeout(() => rangeCol.classList.remove('animate-pulse-highlight'), 1200);
-          }
-        }
-      }, 100);
     }
 
-    // --- DOM Event Listeners ---
+    // --- DOM Event Listeners & Dashboard Context Event Routing ---
 
     document.addEventListener('DOMContentLoaded', () => {
       loadState();
+      initSupabase();
       renderAll();
+
+      // Dashboard Context Selection Event
+      document.getElementById('dashboardContextSelect').addEventListener('change', async (e) => {
+        const val = e.target.value;
+        if (val === 'action_create_group') {
+          e.target.value = currentDashboardContext;
+          promptCreateGroupModal();
+        } else if (val === 'action_join_group') {
+          e.target.value = currentDashboardContext;
+          promptJoinGroupModal();
+        } else if (val === 'action_manage_groups') {
+          e.target.value = currentDashboardContext;
+          promptManageGroupsModal();
+        } else {
+          currentDashboardContext = val;
+          if (val === 'personal') {
+            showToast('已切換為：個人雲端 Dashboard', 'info');
+          } else {
+            const grp = myGroups.find(g => g.id === val);
+            showToast(`已切換為群組：「${grp ? grp.name : val}」 (全員平權共享模式)`, 'success');
+          }
+          await loadDashboardData();
+          setupRealtimeSubscription();
+        }
+      });
 
       // Search Trigger & Modal Bindings
       document.getElementById('btnOpenSearch').addEventListener('click', openSearchModal);
       
       const searchInput = document.getElementById('searchInput');
-      searchInput.addEventListener('input', (e) => {
-        performSearch(e.target.value);
-      });
+      searchInput.addEventListener('input', (e) => performSearch(e.target.value));
 
       document.getElementById('btnClearSearch').addEventListener('click', () => {
         searchInput.value = '';
@@ -1529,30 +2217,24 @@
       });
 
       document.getElementById('searchModalOverlay').addEventListener('click', (e) => {
-        if (e.target === document.getElementById('searchModalOverlay')) {
-          closeSearchModal();
-        }
+        if (e.target === document.getElementById('searchModalOverlay')) closeSearchModal();
       });
 
-      // Keyboard Navigation for Search Modal & Shortcut (Ctrl+K / Cmd+K)
+      // Keyboard Navigation
       document.addEventListener('keydown', (e) => {
         const searchOverlay = document.getElementById('searchModalOverlay');
         const isSearchOpen = searchOverlay && !searchOverlay.classList.contains('opacity-0');
 
         if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') {
           e.preventDefault();
-          if (isSearchOpen) {
-            closeSearchModal();
-          } else {
-            openSearchModal();
-          }
+          if (isSearchOpen) closeSearchModal();
+          else openSearchModal();
           return;
         }
 
         if (isSearchOpen) {
-          if (e.key === 'Escape') {
-            closeSearchModal();
-          } else if (e.key === 'ArrowDown') {
+          if (e.key === 'Escape') closeSearchModal();
+          else if (e.key === 'ArrowDown') {
             e.preventDefault();
             if (currentSearchResults.length > 0) {
               selectedResultIndex = (selectedResultIndex + 1) % currentSearchResults.length;
@@ -1593,7 +2275,7 @@
       document.getElementById('tabBtnNav').addEventListener('click', () => setMobileTab('nav'));
       document.getElementById('tabBtnLinks').addEventListener('click', () => setMobileTab('links'));
 
-      // Window Resize Handler for iPad Viewport Adaptation
+      // Window Resize Handler
       window.addEventListener('resize', updateMobileTabsVisibility);
 
       // Subject / Range Add Buttons
@@ -1602,14 +2284,6 @@
 
       // Link Form Submit
       document.getElementById('linkForm').addEventListener('submit', handleAddLink);
-
-      // Backup Actions
-      document.getElementById('btnExport').addEventListener('click', exportBackupJson);
-      document.getElementById('btnImportTrigger').addEventListener('click', () => {
-        document.getElementById('importFileInput').click();
-      });
-      document.getElementById('importFileInput').addEventListener('change', importBackupJson);
-      document.getElementById('btnResetSeed').addEventListener('click', promptResetSeed);
 
       // Modal Bindings
       document.getElementById('btnModalClose').addEventListener('click', closeModal);
