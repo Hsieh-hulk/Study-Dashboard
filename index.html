@@ -1097,16 +1097,13 @@
             return;
           }
 
-          const newGroup = {
-            id: generateId('grp'),
-            name,
-            invite_code,
-            owner_id: currentUser ? currentUser.id : 'local_owner',
-            created_at: new Date().toISOString()
-          };
-
           if (supabaseClient && currentUser) {
-            const { data, error } = await supabaseClient.from('groups').insert(newGroup).select().single();
+            const { data, error } = await supabaseClient.from('groups').insert({
+              name,
+              invite_code,
+              owner_id: currentUser.id
+            }).select().single();
+
             if (error) {
               showToast('建立失敗: ' + error.message, 'danger');
               return;
@@ -1117,11 +1114,19 @@
               role: 'owner'
             });
             myGroups.push(data);
+            currentDashboardContext = data.id;
           } else {
+            const newGroup = {
+              id: generateId('grp'),
+              name,
+              invite_code,
+              owner_id: 'local_owner',
+              created_at: new Date().toISOString()
+            };
             myGroups.push(newGroup);
+            currentDashboardContext = newGroup.id;
           }
 
-          currentDashboardContext = newGroup.id;
           renderDashboardContextOptions();
           closeModal();
           showToast(`成功建立群組「${name}」 (邀請碼: ${invite_code})`, 'success');
