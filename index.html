@@ -352,10 +352,16 @@
                 <i data-lucide="book-open" class="w-5 h-5 text-[var(--hh-headline)]"></i>
                 <h2 class="font-extrabold text-sm tracking-wide hh-headline uppercase">學習科目</h2>
               </div>
-              <button id="btnAddSubject" class="hh-btn-primary px-3 py-1.5 text-xs flex items-center gap-1">
-                <i data-lucide="plus" class="w-4 h-4"></i>
-                <span>新增科目</span>
-              </button>
+              <div class="flex items-center gap-1.5">
+                <button id="btnPresetMode" class="hh-btn-secondary px-2.5 py-1.5 text-xs flex items-center gap-1" title="選擇／切換預設科目模式">
+                  <i data-lucide="graduation-cap" class="w-4 h-4"></i>
+                  <span class="hidden sm:inline">預設模式</span>
+                </button>
+                <button id="btnAddSubject" class="hh-btn-primary px-3 py-1.5 text-xs flex items-center gap-1">
+                  <i data-lucide="plus" class="w-4 h-4"></i>
+                  <span>新增科目</span>
+                </button>
+              </div>
             </div>
 
             <!-- Subject List Container -->
@@ -518,22 +524,60 @@
     const DEFAULT_SUPABASE_URL = 'https://svupitaqiblqgvfbzblm.supabase.co';
     const DEFAULT_SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InN2dXBpdGFxaWJscWd2ZmJ6YmxtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODUyMzQyNzYsImV4cCI6MjEwMDgxMDI3Nn0.DgliAnfFAZYcBGsHP5D_OYqrxgAzWoSyj9ncKc3rod4';
 
-    // Seed Initial Sample Data
-    const INITIAL_SEED = {
-      subjects: [
-        { id: 'sub_chi_01', name: '國文 📖', ranges: [] },
-        { id: 'sub_eng_02', name: '英文 🔤', ranges: [] },
-        { id: 'sub_math_03', name: '數學 📐', ranges: [] },
-        { id: 'sub_his_04', name: '歷史 📜', ranges: [] },
-        { id: 'sub_geo_05', name: '地理 🗺️', ranges: [] },
-        { id: 'sub_civ_06', name: '公民 ⚖️', ranges: [] },
-        { id: 'sub_phy_07', name: '物理 ⚡', ranges: [] },
-        { id: 'sub_chem_08', name: '化學 🧪', ranges: [] },
-        { id: 'sub_bio_09', name: '生物 🧬', ranges: [] },
-        { id: 'sub_earth_10', name: '地科 🌍', ranges: [] }
-      ],
-      activeSubjectId: 'sub_chi_01',
-      activeRangeId: null
+    // Seed Initial Sample Data & Preset Education Modes
+    const PRESET_MODES = {
+      junior: {
+        id: 'junior',
+        name: '國中模式',
+        badge: '🎒 國中',
+        subjects: [
+          { id: 'sub_chi_01', name: '國文 📖', ranges: [] },
+          { id: 'sub_eng_02', name: '英文 🔤', ranges: [] },
+          { id: 'sub_math_03', name: '數學 📐', ranges: [] },
+          { id: 'sub_bio_09', name: '生物 🧬', ranges: [] },
+          { id: 'sub_phy_07', name: '物理 ⚡', ranges: [] },
+          { id: 'sub_chem_08', name: '理化 🧪', ranges: [] },
+          { id: 'sub_earth_10', name: '地科 🌍', ranges: [] },
+          { id: 'sub_his_04', name: '歷史 📜', ranges: [] },
+          { id: 'sub_geo_05', name: '地理 🗺️', ranges: [] },
+          { id: 'sub_civ_06', name: '公民 ⚖️', ranges: [] }
+        ]
+      },
+      senior: {
+        id: 'senior',
+        name: '高中模式',
+        badge: '🏫 高中',
+        subjects: [
+          { id: 'sub_chi_01', name: '國文 📖', ranges: [] },
+          { id: 'sub_eng_02', name: '英文 🔤', ranges: [] },
+          { id: 'sub_math_03', name: '數學 📐', ranges: [] },
+          { id: 'sub_bio_09', name: '生物 🧬', ranges: [] },
+          { id: 'sub_phy_07', name: '物理 ⚡', ranges: [] },
+          { id: 'sub_chem_08', name: '化學 🧪', ranges: [] },
+          { id: 'sub_earth_10', name: '地科 🌍', ranges: [] },
+          { id: 'sub_his_04', name: '歷史 📜', ranges: [] },
+          { id: 'sub_geo_05', name: '地理 🗺️', ranges: [] },
+          { id: 'sub_civ_06', name: '公民 ⚖️', ranges: [] }
+        ]
+      },
+      vocational: {
+        id: 'vocational',
+        name: '高職模式',
+        badge: '🛠️ 高職',
+        subjects: [
+          { id: 'sub_chi_01', name: '國文 📖', ranges: [] },
+          { id: 'sub_eng_02', name: '英文 🔤', ranges: [] },
+          { id: 'sub_math_03', name: '數學 📐', ranges: [] },
+          { id: 'sub_spec1_04', name: '專一 ⚙️', ranges: [] },
+          { id: 'sub_spec2_05', name: '專二 💻', ranges: [] }
+        ]
+      },
+      university: {
+        id: 'university',
+        name: '大學模式',
+        badge: '🎓 大學',
+        subjects: []
+      }
     };
 
     // State Container
@@ -664,22 +708,12 @@
             }))
           }));
         } else if (currentDashboardContext === 'personal') {
-          // Automatic seeding for brand new personal dashboard
-          const seedPayload = INITIAL_SEED.subjects.map(s => ({
-            name: s.name,
-            user_id: currentUser.id,
-            group_id: null
-          }));
-          const { data: insertedSubs } = await supabaseClient.from('subjects').insert(seedPayload).select('*, ranges(*, resource_links(*))');
-          if (insertedSubs) {
-            state.subjects = insertedSubs.map(sub => ({
-              id: sub.id,
-              name: sub.name,
-              ranges: []
-            }));
-          } else {
-            state.subjects = [];
-          }
+          // Prompt for brand new personal dashboard preset selection
+          state.subjects = [];
+          validateStateDefensive();
+          renderAll();
+          setTimeout(() => promptPresetModeModal(true), 300);
+          return;
         } else {
           state.subjects = [];
         }
@@ -812,34 +846,28 @@
 
     // --- Core Data Initialization & Persistence ---
 
-    function ensureDefaultSubjects() {
-      if (!Array.isArray(state.subjects)) {
-        state.subjects = [];
-      }
-      INITIAL_SEED.subjects.forEach(defaultSub => {
-        const baseName = defaultSub.name.split(' ')[0];
-        const exists = state.subjects.some(s => s.name && s.name.includes(baseName));
-        if (!exists) {
-          state.subjects.push(JSON.parse(JSON.stringify(defaultSub)));
-        }
-      });
-    }
-
     function loadState() {
       try {
         const raw = localStorage.getItem(STORAGE_KEY);
         if (!raw) {
-          state = JSON.parse(JSON.stringify(INITIAL_SEED));
+          state = {
+            subjects: PRESET_MODES.senior.subjects.map(s => JSON.parse(JSON.stringify(s))),
+            activeSubjectId: 'sub_chi_01',
+            activeRangeId: null
+          };
           saveState();
         } else {
           state = JSON.parse(raw);
-          ensureDefaultSubjects();
           validateStateDefensive();
           saveState();
         }
       } catch (err) {
         console.error('Failed to parse state from localStorage', err);
-        state = JSON.parse(JSON.stringify(INITIAL_SEED));
+        state = {
+          subjects: PRESET_MODES.senior.subjects.map(s => JSON.parse(JSON.stringify(s))),
+          activeSubjectId: 'sub_chi_01',
+          activeRangeId: null
+        };
         saveState();
       }
 
@@ -954,6 +982,10 @@
                   <span>群組管理與審核</span>
                   ${pendingJoinRequests.length > 0 ? `<span class="ml-auto px-1.5 py-0.5 text-[9px] bg-rose-500 text-white rounded-full font-black">${pendingJoinRequests.length}</span>` : ''}
                 </button>
+                <button id="menuPresetModes" class="w-full text-left px-3 py-2 rounded-lg hover:bg-[var(--hh-accent-ice)] flex items-center gap-2">
+                  <i data-lucide="graduation-cap" class="w-4 h-4"></i>
+                  <span>預設學習模式</span>
+                </button>
                 <button id="menuConfigSupabase" class="w-full text-left px-3 py-2 rounded-lg hover:bg-[var(--hh-accent-ice)] flex items-center gap-2 text-[var(--hh-paragraph)]">
                   <i data-lucide="database" class="w-4 h-4"></i>
                   <span>Supabase 連線設定</span>
@@ -970,6 +1002,7 @@
 
         document.getElementById('menuEditProfile').onclick = () => promptProfileSetupModal(false);
         document.getElementById('menuManageGroups').onclick = promptManageGroupsModal;
+        document.getElementById('menuPresetModes').onclick = () => promptPresetModeModal(false);
         document.getElementById('menuConfigSupabase').onclick = promptSupabaseConfigModal;
         document.getElementById('menuLogout').onclick = handleLogout;
       }
@@ -1000,7 +1033,123 @@
       select.value = currentDashboardContext;
     }
 
-    // --- Modals for Profile, Groups & Supabase Config ---
+    // --- Modals for Preset Modes, Profile, Groups & Supabase Config ---
+
+    function promptPresetModeModal(isInitial = false) {
+      openModal({
+        title: isInitial ? '歡迎！請選擇您的預設學習階段' : '選擇／切換預設科目模式',
+        icon: 'graduation-cap',
+        contentHtml: `
+          <div class="space-y-4">
+            <p class="text-xs text-[var(--hh-paragraph)] font-bold">
+              ${isInitial ? '系統將根據您選擇的學習階段，為您建立對應的預設科目：' : '請選擇欲切換的學習階段模式（切換將完全保留您現有的科目與單元，僅為您補充缺少的預設科目）：'}
+            </p>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3" id="presetModeOptions">
+              <label class="hh-card p-3 border-2 border-[var(--hh-card-border)] hover:border-[var(--hh-headline)] cursor-pointer flex flex-col justify-between transition-all group">
+                <div class="flex items-center gap-2 mb-1">
+                  <input type="radio" name="presetModeRadio" value="junior" class="accent-[var(--hh-headline)]">
+                  <span class="font-extrabold text-xs hh-headline">🎒 國中模式</span>
+                </div>
+                <p class="text-[10px] text-[var(--hh-paragraph)] opacity-80 leading-tight font-medium">國、英、數、物、理化、生、地科、歷、地、公民 (10科)</p>
+              </label>
+
+              <label class="hh-card p-3 border-2 border-[var(--hh-card-border)] hover:border-[var(--hh-headline)] cursor-pointer flex flex-col justify-between transition-all group">
+                <div class="flex items-center gap-2 mb-1">
+                  <input type="radio" name="presetModeRadio" value="senior" checked class="accent-[var(--hh-headline)]">
+                  <span class="font-extrabold text-xs hh-headline">🏫 高中模式</span>
+                </div>
+                <p class="text-[10px] text-[var(--hh-paragraph)] opacity-80 leading-tight font-medium">國、英、數、物、化、生、地科、歷、地、公民 (10科)</p>
+              </label>
+
+              <label class="hh-card p-3 border-2 border-[var(--hh-card-border)] hover:border-[var(--hh-headline)] cursor-pointer flex flex-col justify-between transition-all group">
+                <div class="flex items-center gap-2 mb-1">
+                  <input type="radio" name="presetModeRadio" value="vocational" class="accent-[var(--hh-headline)]">
+                  <span class="font-extrabold text-xs hh-headline">🛠️ 高職模式</span>
+                </div>
+                <p class="text-[10px] text-[var(--hh-paragraph)] opacity-80 leading-tight font-medium">國文、英文、數學、專一、專二 (5科)</p>
+              </label>
+
+              <label class="hh-card p-3 border-2 border-[var(--hh-card-border)] hover:border-[var(--hh-headline)] cursor-pointer flex flex-col justify-between transition-all group">
+                <div class="flex items-center gap-2 mb-1">
+                  <input type="radio" name="presetModeRadio" value="university" class="accent-[var(--hh-headline)]">
+                  <span class="font-extrabold text-xs hh-headline">🎓 大學模式</span>
+                </div>
+                <p class="text-[10px] text-[var(--hh-paragraph)] opacity-80 leading-tight font-medium">預設空白，可自由手動新增專業科系科目</p>
+              </label>
+            </div>
+          </div>
+        `,
+        confirmText: isInitial ? '確認建立' : '套用並補充科目',
+        onConfirm: async () => {
+          const selected = document.querySelector('input[name="presetModeRadio"]:checked');
+          if (!selected) {
+            showToast('請選擇預設模式', 'danger');
+            return;
+          }
+          const modeKey = selected.value;
+          await applyPresetMode(modeKey);
+          closeModal();
+        }
+      });
+    }
+
+    async function applyPresetMode(modeKey) {
+      const preset = PRESET_MODES[modeKey];
+      if (!preset) return;
+
+      if (currentDashboardContext === 'personal' && supabaseClient && currentUser) {
+        try {
+          const existingNames = (state.subjects || []).map(s => (s.name || '').split(' ')[0]);
+
+          const targetsToInsert = preset.subjects.filter(pSub => {
+            const baseName = pSub.name.split(' ')[0];
+            return !existingNames.includes(baseName);
+          });
+
+          if (targetsToInsert.length > 0) {
+            const seedPayload = targetsToInsert.map(s => ({
+              name: s.name,
+              user_id: currentUser.id,
+              group_id: null
+            }));
+            await supabaseClient.from('subjects').insert(seedPayload);
+            await loadDashboardData();
+            showToast(`已成功補充【${preset.name}】缺少的預設科目`, 'success');
+          } else {
+            showToast(`已套用【${preset.name}】，現有科目已包含該模式所有預設項目`, 'info');
+          }
+        } catch (err) {
+          console.error('Failed applying preset to Supabase:', err);
+          showToast('套用預設模式失敗: ' + err.message, 'danger');
+        }
+      } else {
+        // Local / Offline mode - strictly append non-existing
+        let addedCount = 0;
+        preset.subjects.forEach((pSub, idx) => {
+          const baseName = pSub.name.split(' ')[0];
+          const exists = (state.subjects || []).some(s => s.name && s.name.includes(baseName));
+          if (!exists) {
+            state.subjects.push({
+              id: `sub_${modeKey}_${Date.now()}_${idx}`,
+              name: pSub.name,
+              ranges: []
+            });
+            addedCount++;
+          }
+        });
+        if (!state.activeSubjectId && state.subjects.length > 0) {
+          state.activeSubjectId = state.subjects[0].id;
+        }
+        saveState();
+        renderAll();
+        if (addedCount > 0) {
+          showToast(`已補充【${preset.name}】缺少的預設科目 (${addedCount} 科)`, 'success');
+        } else {
+          showToast(`已套用【${preset.name}】，無須新增重複科目`, 'info');
+        }
+      }
+    }
 
     function promptProfileSetupModal(isOnboarding = false) {
       const defaultNick = currentUser ? currentUser.nickname : '學習者';
@@ -2301,6 +2450,8 @@
       window.addEventListener('resize', updateMobileTabsVisibility);
 
       // Subject / Range Add Buttons
+      const btnPreset = document.getElementById('btnPresetMode');
+      if (btnPreset) btnPreset.addEventListener('click', () => promptPresetModeModal(false));
       document.getElementById('btnAddSubject').addEventListener('click', promptAddSubject);
       document.getElementById('btnAddRange').addEventListener('click', promptAddRange);
 
