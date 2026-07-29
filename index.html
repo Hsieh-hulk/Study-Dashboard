@@ -807,22 +807,12 @@
         } else if (currentDashboardContext === 'personal') {
           const activeFolder = getActiveFolder();
           if (activeFolder) {
-            const presetObj = PRESET_MODES[activeFolder.preset_mode];
-            if (activeFolder.subjects.length === 0 && presetObj && presetObj.subjects && presetObj.subjects.length > 0) {
-              const seedPayload = presetObj.subjects.map(s => ({
-                name: s.name,
-                user_id: currentUser.id,
-                group_id: null,
-                preset_mode: activeFolder.id
-              }));
-              const { data: inserted, error: seedErr } = await supabaseClient.from('subjects').insert(seedPayload).select();
-              if (!seedErr && inserted) {
-                activeFolder.subjects = inserted.map(s => ({
-                  id: s.id, name: s.name, user_id: s.user_id, group_id: null, preset_mode: activeFolder.id, ranges: []
-                }));
+            // Prevent wiping local temporary subjects (樂觀 UI) if they already exist
+            if (activeFolder.subjects.length === 0) {
+              const presetObj = PRESET_MODES[activeFolder.preset_mode];
+              if (presetObj && presetObj.subjects && presetObj.subjects.length > 0) {
+                syncFolderSubjectsToCloud(activeFolder);
               }
-            } else {
-              activeFolder.subjects = [];
             }
           }
         } else {
@@ -836,6 +826,47 @@
         showToast('雲端資料讀取失敗，使用本機暫存資料', 'danger');
         loadState();
         renderAll();
+      }
+    }
+
+    async function syncFolderSubjectsToCloud(folder) {
+      if (!supabaseClient || !currentUser) return;
+      
+      const localSubjects = folder.subjects.filter(s => typeof s.id === 'string' && s.id.startsWith('sub_'));
+      const presetObj = PRESET_MODES[folder.preset_mode];
+      
+      let seedPayload = [];
+      if (localSubjects.length > 0) {
+        seedPayload = localSubjects.map(s => ({
+          name: s.name, user_id: currentUser.id, group_id: null, preset_mode: folder.id
+        }));
+      } else if (folder.subjects.length === 0 && presetObj && presetObj.subjects) {
+        seedPayload = presetObj.subjects.map(s => ({
+          name: s.name, user_id: currentUser.id, group_id: null, preset_mode: folder.id
+        }));
+      } else {
+        return;
+      }
+      
+      try {
+        const { data: inserted, error: seedErr } = await supabaseClient.from('subjects').insert(seedPayload).select();
+        if (seedErr) throw seedErr;
+        if (inserted) {
+          if (localSubjects.length > 0) {
+            inserted.forEach((dbSub, idx) => {
+              if (localSubjects[idx]) localSubjects[idx].id = dbSub.id;
+            });
+          } else {
+            folder.subjects = inserted.map(s => ({
+              id: s.id, name: s.name, user_id: s.user_id, group_id: null, preset_mode: folder.id, ranges: []
+            }));
+          }
+          saveState();
+          if (state.activeFolderId === folder.id) renderAll();
+        }
+      } catch (err) {
+        console.error('Background sync failed:', err);
+        showToast('本機已儲存，雲端將於下次連線時同步', 'warning');
       }
     }
 
@@ -1784,8 +1815,8 @@
       document.getElementById('folderSelect').addEventListener('change', (e) => {
         state.activeFolderId = e.target.value;
         saveState();
-        if (supabaseClient) loadDashboardData();
-        else renderAll();
+        renderAll(); // 樂觀 UI：瞬間切換顯示本地快取
+        if (supabaseClient) loadDashboardData(); // 背景更新雲端數據
       });
 
       lucide.createIcons({ props: { searchTarget: container } });
@@ -1843,11 +1874,15 @@
           state.activeFolderId = folderId;
           saveState();
 
-          if (supabaseClient) loadDashboardData();
-          else renderAll();
-
+          renderAll(); // 樂觀 UI：瞬間渲染新增的資料夾與預設科目
           closeModal();
           showToast(`已建立專案「${name}」`, 'success');
+          
+          if (supabaseClient) {
+            // 背景同步寫入雲端，不阻塞畫面
+            syncFolderSubjectsToCloud(state.folders.find(f => f.id === folderId));
+            loadDashboardData(); // 可選：發起全域同步以確保狀態一致
+          }
         }
       });
     }

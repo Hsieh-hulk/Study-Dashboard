@@ -325,3 +325,14 @@ BEGIN
     ALTER PUBLICATION supabase_realtime ADD TABLE public.group_members;
   END IF;
 END $$;
+
+-- =================================================================
+-- 權限補充：確保 anon 與 authenticated 角色具備 public schema 存取權限
+-- (修正 Postgres error code 42501: permission denied for schema public)
+-- =================================================================
+GRANT USAGE ON SCHEMA public TO anon, authenticated;
+GRANT ALL ON ALL TABLES IN SCHEMA public TO anon, authenticated;
+GRANT ALL ON ALL SEQUENCES IN SCHEMA public TO anon, authenticated;
+ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON TABLES TO anon, authenticated;
+ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON SEQUENCES TO anon, authenticated;
+
