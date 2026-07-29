@@ -1,6 +1,6 @@
 -- =================================================================
 -- Study Dashboard - Supabase PostgreSQL Schema & RLS Setup Script
--- 可以在 Supabase Dashboard 的 SQL Editor 中直接貼上並執行
+-- 可以在 Supabase Dashboard 的 SQL Editor 中重複貼上並執行 (已具備可重覆執行防錯)
 -- =================================================================
 
 -- 1. Profiles 表格 (使用者個人檔案)
@@ -87,75 +87,92 @@ ALTER TABLE public.resource_links ENABLE ROW LEVEL SECURITY;
 -- -----------------------------------------------------------------
 -- Profiles RLS Policies
 -- -----------------------------------------------------------------
+DROP POLICY IF EXISTS "Public profiles are viewable by authenticated users" ON public.profiles;
 CREATE POLICY "Public profiles are viewable by authenticated users"
   ON public.profiles FOR SELECT USING (auth.role() = 'authenticated');
 
+DROP POLICY IF EXISTS "Users can insert their own profile" ON public.profiles;
 CREATE POLICY "Users can insert their own profile"
   ON public.profiles FOR INSERT WITH CHECK (auth.uid() = id);
 
+DROP POLICY IF EXISTS "Users can update their own profile" ON public.profiles;
 CREATE POLICY "Users can update their own profile"
   ON public.profiles FOR UPDATE USING (auth.uid() = id);
 
 -- -----------------------------------------------------------------
 -- Groups RLS Policies
 -- -----------------------------------------------------------------
+DROP POLICY IF EXISTS "Groups viewable by authenticated users" ON public.groups;
 CREATE POLICY "Groups viewable by authenticated users"
   ON public.groups FOR SELECT USING (auth.role() = 'authenticated');
 
+DROP POLICY IF EXISTS "Authenticated users can create groups" ON public.groups;
 CREATE POLICY "Authenticated users can create groups"
   ON public.groups FOR INSERT WITH CHECK (auth.uid() = owner_id);
 
+DROP POLICY IF EXISTS "Group owners can update their groups" ON public.groups;
 CREATE POLICY "Group owners can update their groups"
   ON public.groups FOR UPDATE USING (auth.uid() = owner_id);
 
+DROP POLICY IF EXISTS "Group owners can delete their groups" ON public.groups;
 CREATE POLICY "Group owners can delete their groups"
   ON public.groups FOR DELETE USING (auth.uid() = owner_id);
 
 -- -----------------------------------------------------------------
 -- Group Members RLS Policies
 -- -----------------------------------------------------------------
+DROP POLICY IF EXISTS "Group members viewable by authenticated users" ON public.group_members;
 CREATE POLICY "Group members viewable by authenticated users"
   ON public.group_members FOR SELECT USING (auth.role() = 'authenticated');
 
+DROP POLICY IF EXISTS "Authenticated users can insert group members" ON public.group_members;
 CREATE POLICY "Authenticated users can insert group members"
   ON public.group_members FOR INSERT WITH CHECK (auth.role() = 'authenticated');
 
+DROP POLICY IF EXISTS "Group members can delete members" ON public.group_members;
 CREATE POLICY "Group members can delete members"
   ON public.group_members FOR DELETE USING (auth.role() = 'authenticated');
 
 -- -----------------------------------------------------------------
 -- Group Join Requests RLS Policies
 -- -----------------------------------------------------------------
+DROP POLICY IF EXISTS "Join requests viewable by authenticated users" ON public.group_join_requests;
 CREATE POLICY "Join requests viewable by authenticated users"
   ON public.group_join_requests FOR SELECT USING (auth.role() = 'authenticated');
 
+DROP POLICY IF EXISTS "Authenticated users can create join requests" ON public.group_join_requests;
 CREATE POLICY "Authenticated users can create join requests"
   ON public.group_join_requests FOR INSERT WITH CHECK (auth.uid() = user_id);
 
+DROP POLICY IF EXISTS "Authenticated users can update join requests" ON public.group_join_requests;
 CREATE POLICY "Authenticated users can update join requests"
   ON public.group_join_requests FOR UPDATE USING (auth.role() = 'authenticated');
 
 -- -----------------------------------------------------------------
 -- Subjects RLS Policies (個人獨立與群組成員平權編輯)
 -- -----------------------------------------------------------------
+DROP POLICY IF EXISTS "Subjects select policy" ON public.subjects;
 CREATE POLICY "Subjects select policy"
   ON public.subjects FOR SELECT USING (
     (user_id = auth.uid()) OR 
     (group_id IN (SELECT group_id FROM public.group_members WHERE user_id = auth.uid()))
   );
 
+DROP POLICY IF EXISTS "Subjects insert policy" ON public.subjects;
 CREATE POLICY "Subjects insert policy"
   ON public.subjects FOR INSERT WITH CHECK (
     (user_id = auth.uid()) OR 
     (group_id IN (SELECT group_id FROM public.group_members WHERE user_id = auth.uid()))
   );
 
+DROP POLICY IF EXISTS "Subjects update policy" ON public.subjects;
 CREATE POLICY "Subjects update policy"
   ON public.subjects FOR UPDATE USING (
     (user_id = auth.uid()) OR 
     (group_id IN (SELECT group_id FROM public.group_members WHERE user_id = auth.uid()))
   );
 
+DROP POLICY IF EXISTS "Subjects delete policy" ON public.subjects;
 CREATE POLICY "Subjects delete policy"
   ON public.subjects FOR DELETE USING (
     (user_id = auth.uid()) OR 
@@ -165,6 +182,7 @@ CREATE POLICY "Subjects delete policy"
 -- -----------------------------------------------------------------
 -- Ranges RLS Policies
 -- -----------------------------------------------------------------
+DROP POLICY IF EXISTS "Ranges select policy" ON public.ranges;
 CREATE POLICY "Ranges select policy"
   ON public.ranges FOR SELECT USING (
     EXISTS (
@@ -176,6 +194,7 @@ CREATE POLICY "Ranges select policy"
     )
   );
 
+DROP POLICY IF EXISTS "Ranges insert policy" ON public.ranges;
 CREATE POLICY "Ranges insert policy"
   ON public.ranges FOR INSERT WITH CHECK (
     EXISTS (
@@ -187,6 +206,7 @@ CREATE POLICY "Ranges insert policy"
     )
   );
 
+DROP POLICY IF EXISTS "Ranges update policy" ON public.ranges;
 CREATE POLICY "Ranges update policy"
   ON public.ranges FOR UPDATE USING (
     EXISTS (
@@ -198,6 +218,7 @@ CREATE POLICY "Ranges update policy"
     )
   );
 
+DROP POLICY IF EXISTS "Ranges delete policy" ON public.ranges;
 CREATE POLICY "Ranges delete policy"
   ON public.ranges FOR DELETE USING (
     EXISTS (
@@ -212,6 +233,7 @@ CREATE POLICY "Ranges delete policy"
 -- -----------------------------------------------------------------
 -- Resource Links RLS Policies
 -- -----------------------------------------------------------------
+DROP POLICY IF EXISTS "Resource links select policy" ON public.resource_links;
 CREATE POLICY "Resource links select policy"
   ON public.resource_links FOR SELECT USING (
     EXISTS (
@@ -224,6 +246,7 @@ CREATE POLICY "Resource links select policy"
     )
   );
 
+DROP POLICY IF EXISTS "Resource links insert policy" ON public.resource_links;
 CREATE POLICY "Resource links insert policy"
   ON public.resource_links FOR INSERT WITH CHECK (
     EXISTS (
@@ -236,6 +259,7 @@ CREATE POLICY "Resource links insert policy"
     )
   );
 
+DROP POLICY IF EXISTS "Resource links update policy" ON public.resource_links;
 CREATE POLICY "Resource links update policy"
   ON public.resource_links FOR UPDATE USING (
     EXISTS (
@@ -248,6 +272,7 @@ CREATE POLICY "Resource links update policy"
     )
   );
 
+DROP POLICY IF EXISTS "Resource links delete policy" ON public.resource_links;
 CREATE POLICY "Resource links delete policy"
   ON public.resource_links FOR DELETE USING (
     EXISTS (
@@ -263,5 +288,40 @@ CREATE POLICY "Resource links delete policy"
 -- =================================================================
 -- 啟用 Supabase Realtime 即時同步廣播 (Publication)
 -- =================================================================
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_publication_tables 
+    WHERE pubname = 'supabase_realtime' AND tablename = 'subjects'
+  ) THEN
+    ALTER PUBLICATION supabase_realtime ADD TABLE public.subjects;
+  END IF;
+  
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_publication_tables 
+    WHERE pubname = 'supabase_realtime' AND tablename = 'ranges'
+  ) THEN
+    ALTER PUBLICATION supabase_realtime ADD TABLE public.ranges;
+  END IF;
 
-ALTER PUBLICATION supabase_realtime ADD TABLE public.subjects, public.ranges, public.resource_links, public.group_join_requests, public.group_members;
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_publication_tables 
+    WHERE pubname = 'supabase_realtime' AND tablename = 'resource_links'
+  ) THEN
+    ALTER PUBLICATION supabase_realtime ADD TABLE public.resource_links;
+  END IF;
+
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_publication_tables 
+    WHERE pubname = 'supabase_realtime' AND tablename = 'group_join_requests'
+  ) THEN
+    ALTER PUBLICATION supabase_realtime ADD TABLE public.group_join_requests;
+  END IF;
+
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_publication_tables 
+    WHERE pubname = 'supabase_realtime' AND tablename = 'group_members'
+  ) THEN
+    ALTER PUBLICATION supabase_realtime ADD TABLE public.group_members;
+  END IF;
+END $$;

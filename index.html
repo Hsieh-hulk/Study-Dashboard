@@ -404,22 +404,22 @@
 
         <!-- Column 1: Subjects (Left Sidebar) -->
         <section class="hh-card p-4 flex flex-col relative overflow-hidden">
-          <div class="flex items-center justify-between mb-4 pb-3 border-b-2 border-[var(--hh-card-border)]">
+          <div class="flex items-center justify-between mb-3 pb-3 border-b-2 border-[var(--hh-card-border)]">
             <div class="flex items-center gap-2">
               <i data-lucide="book-open" class="w-5 h-5 text-[var(--hh-headline)]"></i>
-              <h2 class="font-extrabold text-sm tracking-wide hh-headline uppercase">學習科目</h2>
+              <h2 class="font-extrabold text-sm tracking-wide hh-headline uppercase">學習資料</h2>
             </div>
             <div class="flex items-center gap-1.5">
-              <button id="btnPresetMode" class="hh-btn-secondary px-2.5 py-1.5 text-xs flex items-center gap-1"
-                title="選擇／切換預設科目模式">
-                <i data-lucide="graduation-cap" class="w-4 h-4"></i>
-                <span id="btnPresetModeText" class="hidden sm:inline">預設模式</span>
-              </button>
               <button id="btnAddSubject" class="hh-btn-primary px-3 py-1.5 text-xs flex items-center gap-1">
                 <i data-lucide="plus" class="w-4 h-4"></i>
                 <span>新增科目</span>
               </button>
             </div>
+          </div>
+
+          <!-- Folder Selector Bar -->
+          <div id="folderSelectorBar" class="mb-3 flex items-center justify-between gap-2">
+            <!-- JS Rendered Folder Dropdown -->
           </div>
 
           <!-- Subject List Container -->
@@ -611,7 +611,7 @@
           { id: 'sub_math_03', name: '數學 📐', preset_mode: 'junior', ranges: [] },
           { id: 'sub_bio_09', name: '生物 🧬', preset_mode: 'junior', ranges: [] },
           { id: 'sub_phy_07', name: '物理 ⚡', preset_mode: 'junior', ranges: [] },
-          { id: 'sub_chem_08', name: '理化 🧪', preset_mode: 'junior', ranges: [] },
+          { id: 'sub_chem_08', name: '化學 🧪', preset_mode: 'junior', ranges: [] },
           { id: 'sub_earth_10', name: '地科 🌍', preset_mode: 'junior', ranges: [] },
           { id: 'sub_his_04', name: '歷史 📜', preset_mode: 'junior', ranges: [] },
           { id: 'sub_geo_05', name: '地理 🗺️', preset_mode: 'junior', ranges: [] },
@@ -652,12 +652,19 @@
         name: '大學模式',
         badge: '🎓 大學模式',
         subjects: []
+      },
+      blank: {
+        id: 'blank',
+        name: '空白模式',
+        badge: '📄 空白模式',
+        subjects: []
       }
     };
 
     // State Container
     let state = {
-      currentPresetMode: 'senior',
+      folders: [],
+      activeFolderId: null,
       subjects: [],
       activeSubjectId: null,
       activeRangeId: null
@@ -756,8 +763,13 @@
       try {
         let query = supabaseClient.from('subjects').select('*, ranges(*, resource_links(*))');
         if (currentDashboardContext === 'personal') {
-          const mode = state.currentPresetMode || 'senior';
-          query = query.eq('user_id', currentUser.id).is('group_id', null).eq('preset_mode', mode);
+          const activeFolder = getActiveFolder();
+          if (!activeFolder) {
+            state.folders = [];
+            renderAll();
+            return;
+          }
+          query = query.eq('user_id', currentUser.id).is('group_id', null).eq('preset_mode', activeFolder.id);
         } else {
           query = query.eq('group_id', currentDashboardContext);
         }
@@ -765,15 +777,13 @@
         let { data, error } = await query;
         if (error) throw error;
 
-        const currentMode = state.currentPresetMode || 'senior';
-
         if (data && data.length > 0) {
           const loadedSubs = data.map(sub => ({
             id: sub.id,
             name: sub.name,
             user_id: sub.user_id,
             group_id: sub.group_id,
-            preset_mode: sub.preset_mode || 'senior',
+            preset_mode: sub.preset_mode,
             ranges: (sub.ranges || []).map(rng => ({
               id: rng.id,
               name: rng.name,
@@ -789,34 +799,31 @@
           }));
 
           if (currentDashboardContext === 'personal') {
-            state.subjects = (state.subjects || []).filter(s => (s.preset_mode || 'senior') !== currentMode).concat(loadedSubs);
+            const activeFolder = getActiveFolder();
+            if (activeFolder) activeFolder.subjects = loadedSubs;
           } else {
             state.subjects = loadedSubs;
           }
         } else if (currentDashboardContext === 'personal') {
-          // If no subjects exist in DB for this mode, auto-seed default subjects for the mode
-          const presetObj = PRESET_MODES[currentMode];
-          if (presetObj && presetObj.subjects && presetObj.subjects.length > 0) {
-            const seedPayload = presetObj.subjects.map(s => ({
-              name: s.name,
-              user_id: currentUser.id,
-              group_id: null,
-              preset_mode: currentMode
-            }));
-            const { data: inserted, error: seedErr } = await supabaseClient.from('subjects').insert(seedPayload).select();
-            if (!seedErr && inserted) {
-              const newSubs = inserted.map(s => ({
-                id: s.id,
+          const activeFolder = getActiveFolder();
+          if (activeFolder) {
+            const presetObj = PRESET_MODES[activeFolder.preset_mode];
+            if (activeFolder.subjects.length === 0 && presetObj && presetObj.subjects && presetObj.subjects.length > 0) {
+              const seedPayload = presetObj.subjects.map(s => ({
                 name: s.name,
-                user_id: s.user_id,
+                user_id: currentUser.id,
                 group_id: null,
-                preset_mode: currentMode,
-                ranges: []
+                preset_mode: activeFolder.id
               }));
-              state.subjects = (state.subjects || []).filter(s => (s.preset_mode || 'senior') !== currentMode).concat(newSubs);
+              const { data: inserted, error: seedErr } = await supabaseClient.from('subjects').insert(seedPayload).select();
+              if (!seedErr && inserted) {
+                activeFolder.subjects = inserted.map(s => ({
+                  id: s.id, name: s.name, user_id: s.user_id, group_id: null, preset_mode: activeFolder.id, ranges: []
+                }));
+              }
+            } else {
+              activeFolder.subjects = [];
             }
-          } else {
-            state.subjects = (state.subjects || []).filter(s => (s.preset_mode || 'senior') !== currentMode);
           }
         } else {
           state.subjects = [];
@@ -958,33 +965,39 @@
         const raw = localStorage.getItem(STORAGE_KEY);
         if (!raw) {
           state = {
-            currentPresetMode: 'senior',
-            subjects: PRESET_MODES.senior.subjects.map(s => JSON.parse(JSON.stringify(s))),
-            activeSubjectId: 'sub_chi_01',
+            folders: [],
+            activeFolderId: null,
+            subjects: [],
+            activeSubjectId: null,
             activeRangeId: null
           };
           saveState();
         } else {
           state = JSON.parse(raw);
-          if (!state.currentPresetMode) {
-            state.currentPresetMode = 'senior';
-          }
-          if (Array.isArray(state.subjects)) {
-            state.subjects.forEach(s => {
-              if (!s.preset_mode) s.preset_mode = 'senior';
+          if (!state.folders) state.folders = [];
+          if (!state.subjects) state.subjects = [];
+
+          if (state.folders.length === 0 && state.subjects.length > 0) {
+            const oldMode = state.currentPresetMode || 'senior';
+            state.folders.push({
+              id: oldMode,
+              name: '預設專案資料夾',
+              preset_mode: oldMode,
+              subjects: state.subjects
             });
-          } else {
-            state.subjects = [];
+            state.activeFolderId = oldMode;
           }
+
           validateStateDefensive();
           saveState();
         }
       } catch (err) {
         console.error('Failed to parse state from localStorage', err);
         state = {
-          currentPresetMode: 'senior',
-          subjects: PRESET_MODES.senior.subjects.map(s => JSON.parse(JSON.stringify(s))),
-          activeSubjectId: 'sub_chi_01',
+          folders: [],
+          activeFolderId: null,
+          subjects: [],
+          activeSubjectId: null,
           activeRangeId: null
         };
         saveState();
@@ -1011,12 +1024,17 @@
       localStorage.setItem(THEME_KEY, themeName);
     }
 
+    function getActiveFolder() {
+      if (!state.folders) return null;
+      return state.folders.find(f => f.id === state.activeFolderId) || null;
+    }
+
     function getFilteredSubjects() {
       if (currentDashboardContext !== 'personal') {
         return state.subjects || [];
       }
-      const mode = state.currentPresetMode || 'senior';
-      return (state.subjects || []).filter(s => (s.preset_mode || 'senior') === mode);
+      const activeFolder = getActiveFolder();
+      return activeFolder ? (activeFolder.subjects || []) : [];
     }
 
     function validateStateDefensive() {
@@ -1714,6 +1732,7 @@
 
     function renderAll() {
       validateStateDefensive();
+      renderFolderBar();
       renderPresetModeBadge();
       renderSubjects();
       renderRanges();
@@ -1722,22 +1741,199 @@
       lucide.createIcons();
     }
 
-    function renderPresetModeBadge() {
-      const btnText = document.getElementById('btnPresetModeText');
-      if (!btnText) return;
-      if (currentDashboardContext === 'personal') {
-        const mode = state.currentPresetMode || 'senior';
-        const modeObj = PRESET_MODES[mode] || PRESET_MODES.senior;
-        btnText.textContent = modeObj.badge;
-      } else {
-        btnText.textContent = '👥 群組模式';
+    function renderFolderBar() {
+      const container = document.getElementById('folderSelectorBar');
+      if (!container) return;
+      if (currentDashboardContext !== 'personal') {
+        container.innerHTML = `<div class="text-xs font-bold text-[var(--hh-paragraph)] opacity-80 py-1.5">👥 群組共享模式</div>`;
+        return;
       }
+
+      if (state.folders.length === 0) {
+        container.innerHTML = `
+          <button onclick="promptCreateFolderModal()" class="w-full hh-btn-primary px-3 py-2 text-xs flex items-center justify-center gap-1.5 shadow-sm">
+            <i data-lucide="folder-plus" class="w-4 h-4"></i>
+            <span>建立第一個專案資料夾</span>
+          </button>
+        `;
+        lucide.createIcons({ props: { searchTarget: container } });
+        return;
+      }
+
+      let options = state.folders.map(f => `<option value="${f.id}" ${f.id === state.activeFolderId ? 'selected' : ''}>${escapeHtml(f.name)}</option>`).join('');
+
+      container.innerHTML = `
+        <div class="relative flex-1">
+          <select id="folderSelect" class="w-full hh-input px-2.5 py-1.5 text-xs font-bold rounded-lg cursor-pointer shadow-sm pr-7 bg-[var(--hh-accent-ice)] truncate">
+            ${options}
+          </select>
+        </div>
+        <div class="flex items-center gap-1 shrink-0">
+          <button onclick="promptCreateFolderModal()" class="hh-btn-secondary p-1.5 rounded-lg text-[var(--hh-headline)]" title="新增專案">
+            <i data-lucide="plus" class="w-4 h-4"></i>
+          </button>
+          <button onclick="promptEditFolderModal()" class="hh-btn-secondary p-1.5 rounded-lg text-[var(--hh-paragraph)]" title="編輯專案">
+            <i data-lucide="edit-3" class="w-4 h-4"></i>
+          </button>
+          <button onclick="promptDeleteFolderModal()" class="p-1.5 rounded-lg text-rose-500 hover:bg-rose-50 border border-transparent transition" title="刪除專案">
+            <i data-lucide="trash-2" class="w-4 h-4"></i>
+          </button>
+        </div>
+      `;
+
+      document.getElementById('folderSelect').addEventListener('change', (e) => {
+        state.activeFolderId = e.target.value;
+        saveState();
+        if (supabaseClient) loadDashboardData();
+        else renderAll();
+      });
+
+      lucide.createIcons({ props: { searchTarget: container } });
+    }
+
+    function promptCreateFolderModal() {
+      openModal({
+        title: '新增專案資料夾',
+        icon: 'folder-plus',
+        contentHtml: `
+          <div class="space-y-4">
+            <div>
+              <label class="block text-xs font-black hh-headline mb-1.5">專案名稱</label>
+              <input type="text" id="inputFolderName" placeholder="例如: 113學測備考, 大一課程" required class="w-full px-3.5 py-2 text-xs font-bold hh-input">
+            </div>
+            <div>
+              <label class="block text-xs font-black hh-headline mb-1.5">預設學制模式 (決定初始科目)</label>
+              <select id="selectFolderMode" class="w-full hh-input px-3 py-2 text-xs font-bold bg-[var(--hh-accent-ice)] cursor-pointer">
+                <option value="junior">🎒 國中模式 (含10科)</option>
+                <option value="senior" selected>🏫 高中模式 (含10科)</option>
+                <option value="vocational">🛠️ 高職模式 (含5科)</option>
+                <option value="university">🎓 大學模式 (無科目)</option>
+                <option value="blank">📄 空白模式 (無科目)</option>
+              </select>
+            </div>
+          </div>
+        `,
+        confirmText: '建立專案',
+        onConfirm: () => {
+          const name = document.getElementById('inputFolderName').value.trim();
+          const mode = document.getElementById('selectFolderMode').value;
+          if (!name) {
+            showToast('請輸入專案名稱', 'danger');
+            return;
+          }
+          const folderId = generateId('folder');
+          const presetObj = PRESET_MODES[mode];
+          let initSubjects = [];
+
+          if (presetObj && presetObj.subjects) {
+            initSubjects = presetObj.subjects.map((s, idx) => ({
+              id: `sub_${folderId}_${Date.now()}_${idx}`,
+              name: s.name,
+              preset_mode: folderId,
+              ranges: []
+            }));
+          }
+
+          state.folders.push({
+            id: folderId,
+            name: name,
+            preset_mode: mode,
+            subjects: initSubjects
+          });
+          state.activeFolderId = folderId;
+          saveState();
+
+          if (supabaseClient) loadDashboardData();
+          else renderAll();
+
+          closeModal();
+          showToast(`已建立專案「${name}」`, 'success');
+        }
+      });
+    }
+
+    function promptEditFolderModal() {
+      const activeFolder = getActiveFolder();
+      if (!activeFolder) return;
+      openModal({
+        title: '重新命名專案',
+        icon: 'edit-3',
+        contentHtml: `
+          <div>
+            <label class="block text-xs font-black hh-headline mb-1.5">專案名稱</label>
+            <input type="text" id="inputEditFolderName" value="${escapeHtml(activeFolder.name)}" required class="w-full px-3.5 py-2 text-xs font-bold hh-input">
+          </div>
+        `,
+        confirmText: '儲存',
+        onConfirm: () => {
+          const name = document.getElementById('inputEditFolderName').value.trim();
+          if (name) {
+            activeFolder.name = name;
+            saveState();
+            renderAll();
+            showToast('專案名稱已更新', 'success');
+          }
+          closeModal();
+        }
+      });
+    }
+
+    function promptDeleteFolderModal() {
+      const activeFolder = getActiveFolder();
+      if (!activeFolder) return;
+      openModal({
+        title: '刪除專案確認',
+        icon: 'alert-triangle',
+        confirmClass: 'hh-btn-primary !bg-rose-500 !text-white',
+        confirmText: '確認刪除',
+        contentHtml: `
+          <p class="text-xs font-bold">
+            確定要刪除專案 <strong class="text-rose-600">「${escapeHtml(activeFolder.name)}」</strong> 嗎？<br>
+            <span class="opacity-75 text-[11px]">這將一併刪除該專案內的所有科目與資料，且無法還原！</span>
+          </p>
+        `,
+        onConfirm: async () => {
+          if (supabaseClient && currentUser) {
+            await supabaseClient.from('subjects').delete().eq('user_id', currentUser.id).is('group_id', null).eq('preset_mode', activeFolder.id);
+          }
+          state.folders = state.folders.filter(f => f.id !== activeFolder.id);
+          state.activeFolderId = state.folders.length > 0 ? state.folders[0].id : null;
+          saveState();
+          renderAll();
+          closeModal();
+          showToast('已刪除專案資料夾', 'info');
+        }
+      });
+    }
+
+    function renderPresetModeBadge() {
+      // 按鈕已從 UI 中移除，此函數保留為擴充用
     }
 
     // Column 1: Subjects
     function renderSubjects() {
       const container = document.getElementById('subjectList');
       container.innerHTML = '';
+      const btnAddSubject = document.getElementById('btnAddSubject');
+
+      if (currentDashboardContext === 'personal' && state.folders.length === 0) {
+        if (btnAddSubject) btnAddSubject.style.display = 'none';
+        container.innerHTML = `
+          <div class="text-center py-8 px-4 text-[var(--hh-paragraph)] opacity-80 flex flex-col items-center justify-center h-full">
+            <i data-lucide="folder-open" class="w-10 h-10 mx-auto mb-3 opacity-60"></i>
+            <h3 class="text-sm font-black mb-1">尚無專案資料夾</h3>
+            <p class="text-[11px] font-semibold mb-4 opacity-75">請建立第一個專案以開始管理學習資料</p>
+            <button onclick="promptCreateFolderModal()" class="hh-btn-primary px-4 py-2 text-xs flex items-center gap-1.5">
+              <i data-lucide="folder-plus" class="w-4 h-4"></i>
+              <span>新增專案資料夾</span>
+            </button>
+          </div>
+        `;
+        lucide.createIcons({ props: { searchTarget: container } });
+        return;
+      }
+
+      if (btnAddSubject) btnAddSubject.style.display = 'flex';
 
       const visibleSubjects = getFilteredSubjects();
 
@@ -1757,8 +1953,8 @@
 
         const item = document.createElement('div');
         item.className = `group flex items-center justify-between p-3 rounded-xl cursor-pointer transition-all duration-150 border-2 ${isActive
-            ? 'hh-card-active font-black border-[var(--hh-card-border)]'
-            : 'bg-[var(--hh-card)] border-[var(--hh-card-border)] hover:border-[var(--hh-card-hover-border)]'
+          ? 'hh-card-active font-black border-[var(--hh-card-border)]'
+          : 'bg-[var(--hh-card)] border-[var(--hh-card-border)] hover:border-[var(--hh-card-hover-border)]'
           }`;
 
         item.onclick = (e) => {
@@ -1778,11 +1974,19 @@
             <span class="hh-badge px-2 py-0.5 text-[10px] rounded-full">
               ${totalRanges} 範圍
             </span>
+            <button class="btn-edit-subject p-1.5 text-slate-400 hover:text-[var(--hh-btn-main)] rounded-lg hover:bg-[var(--hh-accent-ice)] border border-transparent hover:border-[var(--hh-card-border)] transition" title="編輯科目">
+              <i data-lucide="pencil" class="w-3.5 h-3.5"></i>
+            </button>
             <button class="btn-delete-subject p-1.5 text-slate-400 hover:text-rose-600 rounded-lg hover:bg-rose-50 border border-transparent hover:border-rose-300 transition" title="刪除科目">
               <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
             </button>
           </div>
         `;
+
+        item.querySelector('.btn-edit-subject').onclick = (e) => {
+          e.stopPropagation();
+          promptEditSubject(sub);
+        };
 
         item.querySelector('.btn-delete-subject').onclick = (e) => {
           e.stopPropagation();
@@ -1830,8 +2034,8 @@
 
         const item = document.createElement('div');
         item.className = `group flex items-center justify-between p-3 rounded-xl cursor-pointer transition-all duration-150 border-2 ${isActive
-            ? 'hh-card-active font-black border-[var(--hh-card-border)]'
-            : 'bg-[var(--hh-card)] border-[var(--hh-card-border)] hover:border-[var(--hh-card-hover-border)]'
+          ? 'hh-card-active font-black border-[var(--hh-card-border)]'
+          : 'bg-[var(--hh-card)] border-[var(--hh-card-border)] hover:border-[var(--hh-card-hover-border)]'
           }`;
 
         item.onclick = (e) => {
@@ -1854,11 +2058,19 @@
             <span class="hh-badge px-2 py-0.5 text-[10px] rounded-full">
               ${totalLinks} 連結
             </span>
+            <button class="btn-edit-range p-1.5 text-slate-400 hover:text-[var(--hh-btn-main)] rounded-lg hover:bg-[var(--hh-accent-ice)] border border-transparent hover:border-[var(--hh-card-border)] transition" title="編輯範圍">
+              <i data-lucide="pencil" class="w-3.5 h-3.5"></i>
+            </button>
             <button class="btn-delete-range p-1.5 text-slate-400 hover:text-rose-600 rounded-lg hover:bg-rose-50 border border-transparent hover:border-rose-300 transition" title="刪除範圍">
               <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
             </button>
           </div>
         `;
+
+        item.querySelector('.btn-edit-range').onclick = (e) => {
+          e.stopPropagation();
+          promptEditRange(rng);
+        };
 
         item.querySelector('.btn-delete-range').onclick = (e) => {
           e.stopPropagation();
@@ -1955,6 +2167,11 @@
               <span>複製</span>
             </button>
 
+            <button class="btn-edit-link hh-btn-secondary px-3 py-1.5 text-xs flex items-center gap-1" title="編輯連結">
+              <i data-lucide="pencil" class="w-3.5 h-3.5"></i>
+              <span>編輯</span>
+            </button>
+
             <button class="btn-delete-link p-2 text-slate-400 hover:text-rose-600 rounded-lg hover:bg-rose-50 border border-transparent hover:border-rose-300 transition" title="刪除連結">
               <i data-lucide="trash-2" class="w-4 h-4"></i>
             </button>
@@ -1967,6 +2184,10 @@
           }).catch(err => {
             showToast('複製失敗', 'danger');
           });
+        };
+
+        card.querySelector('.btn-edit-link').onclick = () => {
+          promptEditLink(lnk);
         };
 
         card.querySelector('.btn-delete-link').onclick = () => {
@@ -2000,7 +2221,7 @@
 
           if (supabaseClient && currentUser) {
             const insertPayload = currentDashboardContext === 'personal'
-              ? { name: val, user_id: currentUser.id, group_id: null, preset_mode: state.currentPresetMode || 'senior' }
+              ? { name: val, user_id: currentUser.id, group_id: null, preset_mode: state.activeFolderId }
               : { name: val, user_id: null, group_id: currentDashboardContext };
 
             const { data: newSub, error } = await supabaseClient.from('subjects').insert(insertPayload).select().single();
@@ -2008,17 +2229,27 @@
               showToast('新增科目失敗: ' + error.message, 'danger');
               return;
             }
-            state.subjects.push({ id: newSub.id, name: newSub.name, preset_mode: newSub.preset_mode || 'senior', ranges: [] });
+            const activeFolder = getActiveFolder();
+            if (currentDashboardContext === 'personal' && activeFolder) {
+              activeFolder.subjects.push({ id: newSub.id, name: newSub.name, preset_mode: activeFolder.id, ranges: [] });
+            } else {
+              state.subjects.push({ id: newSub.id, name: newSub.name, preset_mode: newSub.preset_mode, ranges: [] });
+            }
             state.activeSubjectId = newSub.id;
             state.activeRangeId = null;
           } else {
             const newSub = {
               id: generateId('sub'),
               name: val,
-              preset_mode: currentDashboardContext === 'personal' ? (state.currentPresetMode || 'senior') : 'senior',
+              preset_mode: currentDashboardContext === 'personal' ? state.activeFolderId : 'senior',
               ranges: []
             };
-            state.subjects.push(newSub);
+            if (currentDashboardContext === 'personal') {
+              const activeFolder = getActiveFolder();
+              if (activeFolder) activeFolder.subjects.push(newSub);
+            } else {
+              state.subjects.push(newSub);
+            }
             state.activeSubjectId = newSub.id;
             state.activeRangeId = null;
             saveState();
@@ -2050,9 +2281,19 @@
               showToast('刪除科目失敗: ' + error.message, 'danger');
               return;
             }
-            state.subjects = state.subjects.filter(s => s.id !== sub.id);
+            if (currentDashboardContext === 'personal') {
+              const activeFolder = getActiveFolder();
+              if (activeFolder) activeFolder.subjects = activeFolder.subjects.filter(s => s.id !== sub.id);
+            } else {
+              state.subjects = state.subjects.filter(s => s.id !== sub.id);
+            }
           } else {
-            state.subjects = state.subjects.filter(s => s.id !== sub.id);
+            if (currentDashboardContext === 'personal') {
+              const activeFolder = getActiveFolder();
+              if (activeFolder) activeFolder.subjects = activeFolder.subjects.filter(s => s.id !== sub.id);
+            } else {
+              state.subjects = state.subjects.filter(s => s.id !== sub.id);
+            }
             saveState();
           }
 
@@ -2060,6 +2301,42 @@
           renderAll();
           closeModal();
           showToast(`已刪除科目「${sub.name}」`, 'info');
+        }
+      });
+    }
+
+    function promptEditSubject(sub) {
+      openModal({
+        title: '編輯學習科目',
+        icon: 'pencil',
+        contentHtml: `
+          <div>
+            <label class="block text-xs font-black hh-headline mb-1.5">科目名稱</label>
+            <input type="text" id="modalInputEditSubject" value="${escapeHtml(sub.name)}" class="w-full px-3.5 py-2 text-xs font-bold hh-input">
+          </div>
+        `,
+        confirmText: '儲存變更',
+        onConfirm: async () => {
+          const input = document.getElementById('modalInputEditSubject');
+          const val = input ? input.value.trim() : '';
+          if (!val) {
+            showToast('請輸入有效的科目名稱', 'danger');
+            return;
+          }
+          if (supabaseClient && currentUser) {
+            const { error } = await supabaseClient.from('subjects').update({ name: val }).eq('id', sub.id);
+            if (error) {
+              showToast('編輯科目失敗: ' + error.message, 'danger');
+              return;
+            }
+            sub.name = val;
+          } else {
+            sub.name = val;
+            saveState();
+          }
+          renderAll();
+          closeModal();
+          showToast('科目已更新', 'success');
         }
       });
     }
@@ -2158,6 +2435,42 @@
       });
     }
 
+    function promptEditRange(rng) {
+      openModal({
+        title: '編輯單元範圍',
+        icon: 'pencil',
+        contentHtml: `
+          <div>
+            <label class="block text-xs font-black hh-headline mb-1.5">單元範圍名稱</label>
+            <input type="text" id="modalInputEditRange" value="${escapeHtml(rng.name)}" class="w-full px-3.5 py-2 text-xs font-bold hh-input">
+          </div>
+        `,
+        confirmText: '儲存變更',
+        onConfirm: async () => {
+          const input = document.getElementById('modalInputEditRange');
+          const val = input ? input.value.trim() : '';
+          if (!val) {
+            showToast('請輸入有效的單元名稱', 'danger');
+            return;
+          }
+          if (supabaseClient && currentUser) {
+            const { error } = await supabaseClient.from('ranges').update({ name: val }).eq('id', rng.id);
+            if (error) {
+              showToast('編輯單元失敗: ' + error.message, 'danger');
+              return;
+            }
+            rng.name = val;
+          } else {
+            rng.name = val;
+            saveState();
+          }
+          renderAll();
+          closeModal();
+          showToast('單元範圍已更新', 'success');
+        }
+      });
+    }
+
     async function handleAddLink(e) {
       e.preventDefault();
       const titleInput = document.getElementById('linkTitleInput');
@@ -2250,6 +2563,52 @@
           renderAll();
           closeModal();
           showToast('已刪除學習連結', 'info');
+        }
+      });
+    }
+
+    function promptEditLink(lnk) {
+      openModal({
+        title: '編輯學習連結',
+        icon: 'pencil',
+        contentHtml: `
+          <div class="space-y-3">
+            <div>
+              <label class="block text-xs font-black hh-headline mb-1.5">連結名稱</label>
+              <input type="text" id="modalInputEditLinkTitle" value="${escapeHtml(lnk.title)}" class="w-full px-3.5 py-2 text-xs font-bold hh-input">
+            </div>
+            <div>
+              <label class="block text-xs font-black hh-headline mb-1.5">網址</label>
+              <input type="text" id="modalInputEditLinkUrl" value="${escapeHtml(lnk.url)}" class="w-full px-3.5 py-2 text-xs font-bold hh-input">
+            </div>
+          </div>
+        `,
+        confirmText: '儲存變更',
+        onConfirm: async () => {
+          const title = document.getElementById('modalInputEditLinkTitle').value.trim();
+          const rawUrl = document.getElementById('modalInputEditLinkUrl').value.trim();
+          if (!title || !rawUrl) {
+            showToast('請完整填寫連結名稱與網址', 'danger');
+            return;
+          }
+          const normalized = normalizeUrl(rawUrl);
+          
+          if (supabaseClient && currentUser) {
+            const { error } = await supabaseClient.from('resource_links').update({ title: title, url: normalized }).eq('id', lnk.id);
+            if (error) {
+              showToast('編輯連結失敗: ' + error.message, 'danger');
+              return;
+            }
+            lnk.title = title;
+            lnk.url = normalized;
+          } else {
+            lnk.title = title;
+            lnk.url = normalized;
+            saveState();
+          }
+          renderAll();
+          closeModal();
+          showToast('學習連結已更新', 'success');
         }
       });
     }
@@ -2420,8 +2779,8 @@
         }
 
         item.className = `search-result-item flex items-center justify-between p-3 rounded-xl cursor-pointer transition-all duration-150 border-2 ${isSelected
-            ? 'hh-card-active border-[var(--hh-card-border)] ring-2 ring-[var(--hh-btn-main)]'
-            : 'bg-[var(--hh-card)] border-[var(--hh-card-border)] hover:border-[var(--hh-card-hover-border)]'
+          ? 'hh-card-active border-[var(--hh-card-border)] ring-2 ring-[var(--hh-btn-main)]'
+          : 'bg-[var(--hh-card)] border-[var(--hh-card-border)] hover:border-[var(--hh-card-hover-border)]'
           }`;
         item.dataset.index = index;
 
@@ -2592,8 +2951,6 @@
       window.addEventListener('resize', updateMobileTabsVisibility);
 
       // Subject / Range Add Buttons
-      const btnPreset = document.getElementById('btnPresetMode');
-      if (btnPreset) btnPreset.addEventListener('click', () => promptPresetModeModal(false));
       document.getElementById('btnAddSubject').addEventListener('click', promptAddSubject);
       document.getElementById('btnAddRange').addEventListener('click', promptAddRange);
 
