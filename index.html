@@ -593,7 +593,7 @@
   <!-- JavaScript Logic -->
   <script>
     // Storage Keys
-    const STORAGE_KEY = 'study_agent_db_v4';
+    const STORAGE_KEY = 'study_agent_db_v5';
     const THEME_KEY = 'happyhues_theme_setting';
     const SUPABASE_CONFIG_KEY = 'study_dashboard_supabase_cfg';
     const DEFAULT_SUPABASE_URL = 'https://svupitaqiblqgvfbzblm.supabase.co';
@@ -761,7 +761,7 @@
       }
 
       try {
-        let query = supabaseClient.from('subjects').select('*, ranges(*, resource_links(*))');
+        let query = supabaseClient.from('subjects').select('*, ranges(*, resource_links(*, creator:profiles!resource_links_created_by_fkey(nickname, avatar_url), editor:profiles!fk_resource_links_last_editor(nickname, avatar_url)))');
         if (currentDashboardContext === 'personal') {
           const activeFolder = getActiveFolder();
           if (!activeFolder) {
@@ -793,7 +793,11 @@
                 title: lnk.title,
                 url: lnk.url,
                 range_id: lnk.range_id,
-                created_by: lnk.created_by
+                created_by: lnk.created_by,
+                last_edited_by: lnk.last_edited_by,
+                last_edited_at: lnk.last_edited_at,
+                editor: lnk.editor || null,
+                creator: lnk.creator || null
               }))
             }))
           }));
@@ -910,17 +914,30 @@
           };
 
           await supabaseClient.from('profiles').upsert(newProfile);
-          currentUser = { id: authUser.id, email: authUser.email, nickname, avatarUrl };
+
+          let finalAvatarUrl = avatarUrl;
+          if (finalAvatarUrl.includes('#local')) {
+            const local = localStorage.getItem(`local_avatar_${authUser.id}`);
+            if (local) finalAvatarUrl = local;
+          }
+          currentUser = { id: authUser.id, email: authUser.email, nickname, avatarUrl: finalAvatarUrl };
           promptProfileSetupModal(true); // Prompt onboarding
         } else {
           if (profile.current_preset_mode) {
             state.currentPresetMode = profile.current_preset_mode;
           }
+
+          let finalAvatarUrl = profile.avatar_url || ('https://api.dicebear.com/7.x/bottts/svg?seed=' + profile.id);
+          if (finalAvatarUrl.includes('#local')) {
+            const local = localStorage.getItem(`local_avatar_${profile.id}`);
+            if (local) finalAvatarUrl = local;
+          }
+
           currentUser = {
             id: profile.id,
             email: profile.email || authUser.email,
             nickname: profile.nickname || '學習者',
-            avatarUrl: profile.avatar_url || ('https://api.dicebear.com/7.x/bottts/svg?seed=' + profile.id)
+            avatarUrl: finalAvatarUrl
           };
         }
       } catch (err) {
@@ -993,8 +1010,30 @@
 
     function loadState() {
       try {
-        const raw = localStorage.getItem(STORAGE_KEY);
+        let raw = localStorage.getItem(STORAGE_KEY);
+
+        // 從舊版 v4 遷移：若 v5 不存在，檢查 v4 但自動濾除舊版產生的「預設專案資料夾」
         if (!raw) {
+          const oldRaw = localStorage.getItem('study_agent_db_v4');
+          if (oldRaw) {
+            try {
+              const oldState = JSON.parse(oldRaw);
+              if (oldState && Array.isArray(oldState.folders)) {
+                const userFolders = oldState.folders.filter(f => f.name !== '預設專案資料夾');
+                if (userFolders.length > 0) {
+                  state.folders = userFolders;
+                  state.activeFolderId = oldState.activeFolderId && userFolders.some(f => f.id === oldState.activeFolderId)
+                    ? oldState.activeFolderId
+                    : userFolders[0].id;
+                }
+              }
+            } catch (e) {
+              console.warn('Failed to migrate from v4 state', e);
+            }
+          }
+        }
+
+        if (!raw && state.folders.length === 0) {
           state = {
             folders: [],
             activeFolderId: null,
@@ -1003,21 +1042,10 @@
             activeRangeId: null
           };
           saveState();
-        } else {
+        } else if (raw) {
           state = JSON.parse(raw);
           if (!state.folders) state.folders = [];
           if (!state.subjects) state.subjects = [];
-
-          if (state.folders.length === 0 && state.subjects.length > 0) {
-            const oldMode = state.currentPresetMode || 'senior';
-            state.folders.push({
-              id: oldMode,
-              name: '預設專案資料夾',
-              preset_mode: oldMode,
-              subjects: state.subjects
-            });
-            state.activeFolderId = oldMode;
-          }
 
           validateStateDefensive();
           saveState();
@@ -1352,9 +1380,17 @@
               <label class="block text-xs font-black hh-headline mb-1.5">選擇或貼上頭像網址</label>
               <div class="flex gap-2 mb-2">
                 <input type="text" id="inputAvatarUrl" value="${escapeHtml(defaultAvatar)}" placeholder="https://..." class="flex-1 px-3.5 py-2 text-xs font-bold hh-input">
-                <button id="btnRandomAvatar" type="button" class="hh-btn-secondary px-3 py-2 text-xs font-bold">
+                <button id="btnRandomAvatar" type="button" class="hh-btn-secondary px-3 py-2 text-xs font-bold whitespace-nowrap">
                   🎲 隨機產生
                 </button>
+              </div>
+              <div class="flex items-center gap-3 mt-2">
+                <label for="inputAvatarFile" class="hh-btn-secondary px-3 py-2 text-xs font-bold cursor-pointer inline-flex items-center gap-2 whitespace-nowrap">
+                  <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
+                  從裝置選擇圖片
+                </label>
+                <input type="file" id="inputAvatarFile" accept="image/*" class="hidden">
+                <span id="avatarUploadStatus" class="text-xs text-[var(--hh-text-dim)] truncate max-w-[120px]"></span>
               </div>
             </div>
           </div>
@@ -1371,13 +1407,23 @@
 
           if (currentUser) {
             currentUser.nickname = nickname;
-            currentUser.avatarUrl = avatarUrl || ('https://api.dicebear.com/7.x/bottts/svg?seed=' + currentUser.id);
+            
+            let saveToSupabaseAvatarUrl = avatarUrl;
+            if (avatarUrl.startsWith('data:image/')) {
+              localStorage.setItem(`local_avatar_${currentUser.id}`, avatarUrl);
+              saveToSupabaseAvatarUrl = `https://api.dicebear.com/7.x/bottts/svg?seed=${currentUser.id}#local`;
+              currentUser.avatarUrl = avatarUrl;
+            } else {
+              localStorage.removeItem(`local_avatar_${currentUser.id}`);
+              currentUser.avatarUrl = avatarUrl || ('https://api.dicebear.com/7.x/bottts/svg?seed=' + currentUser.id);
+              saveToSupabaseAvatarUrl = currentUser.avatarUrl;
+            }
 
             if (supabaseClient) {
               await supabaseClient.from('profiles').upsert({
                 id: currentUser.id,
                 nickname: currentUser.nickname,
-                avatar_url: currentUser.avatarUrl
+                avatar_url: saveToSupabaseAvatarUrl
               });
             }
           }
@@ -1391,7 +1437,56 @@
       document.getElementById('btnRandomAvatar').onclick = () => {
         const seed = Math.random().toString(36).substring(7);
         document.getElementById('inputAvatarUrl').value = `https://api.dicebear.com/7.x/bottts/svg?seed=${seed}`;
+        const statusEl = document.getElementById('avatarUploadStatus');
+        if(statusEl) statusEl.textContent = '';
       };
+
+      const fileInput = document.getElementById('inputAvatarFile');
+      if (fileInput) {
+        fileInput.addEventListener('change', function(e) {
+          const file = e.target.files[0];
+          if (!file) return;
+
+          const statusEl = document.getElementById('avatarUploadStatus');
+          statusEl.textContent = '處理中...';
+          statusEl.className = 'text-xs text-[var(--hh-text-dim)] truncate max-w-[120px]';
+
+          const reader = new FileReader();
+          reader.onload = function(event) {
+            const img = new Image();
+            img.onload = function() {
+              const canvas = document.createElement('canvas');
+              const maxSize = 200;
+              let width = img.width;
+              let height = img.height;
+
+              if (width > height) {
+                if (width > maxSize) {
+                  height *= maxSize / width;
+                  width = maxSize;
+                }
+              } else {
+                if (height > maxSize) {
+                  width *= maxSize / height;
+                  height = maxSize;
+                }
+              }
+
+              canvas.width = width;
+              canvas.height = height;
+              const ctx = canvas.getContext('2d');
+              ctx.drawImage(img, 0, 0, width, height);
+
+              const dataUrl = canvas.toDataURL('image/jpeg', 0.85);
+              document.getElementById('inputAvatarUrl').value = dataUrl;
+              statusEl.textContent = '載入成功';
+              statusEl.className = 'text-xs text-[var(--hh-accent-green)] font-bold truncate max-w-[120px]';
+            };
+            img.src = event.target.result;
+          };
+          reader.readAsDataURL(file);
+        });
+      }
     }
 
     function promptCreateGroupModal() {
@@ -2188,6 +2283,12 @@
                 <span class="truncate">${safeUrl}</span>
                 <i data-lucide="external-link" class="w-3.5 h-3.5 shrink-0"></i>
               </a>
+              ${(lnk.editor || lnk.creator) ? `
+              <div class="flex items-center gap-1.5 mt-1.5 pt-1.5 border-t border-[var(--hh-card-border)]/10 text-[10px] font-bold text-[var(--hh-paragraph)] opacity-70">
+                <img src="${escapeHtml((lnk.editor || lnk.creator).avatar_url || 'https://api.dicebear.com/7.x/notionists/svg?seed=' + (lnk.editor || lnk.creator).nickname)}" class="w-4 h-4 rounded-full border border-[var(--hh-card-border)] object-cover bg-white">
+                <span>最後編輯: ${escapeHtml((lnk.editor || lnk.creator).nickname)}</span>
+              </div>
+              ` : ''}
             </div>
           </div>
 
@@ -2532,8 +2633,10 @@
           range_id: activeRange.id,
           title: title,
           url: normalized,
-          created_by: currentUser.id
-        }).select().single();
+          created_by: currentUser.id,
+          last_edited_by: currentUser.id,
+          last_edited_at: new Date().toISOString()
+        }).select('*, creator:profiles!resource_links_created_by_fkey(nickname, avatar_url), editor:profiles!fk_resource_links_last_editor(nickname, avatar_url)').single();
 
         if (error) {
           showToast('新增連結失敗: ' + error.message, 'danger');
@@ -2545,7 +2648,11 @@
           id: newLnk.id,
           title: newLnk.title,
           url: newLnk.url,
-          created_by: newLnk.created_by
+          created_by: newLnk.created_by,
+          last_edited_by: newLnk.last_edited_by,
+          last_edited_at: newLnk.last_edited_at,
+          editor: newLnk.editor || null,
+          creator: newLnk.creator || null
         });
       } else {
         const newLink = {
@@ -2629,13 +2736,16 @@
           const normalized = normalizeUrl(rawUrl);
           
           if (supabaseClient && currentUser) {
-            const { error } = await supabaseClient.from('resource_links').update({ title: title, url: normalized }).eq('id', lnk.id);
+            const { error } = await supabaseClient.from('resource_links').update({ title: title, url: normalized, last_edited_by: currentUser.id, last_edited_at: new Date().toISOString() }).eq('id', lnk.id);
             if (error) {
               showToast('編輯連結失敗: ' + error.message, 'danger');
               return;
             }
             lnk.title = title;
             lnk.url = normalized;
+            lnk.last_edited_by = currentUser.id;
+            lnk.last_edited_at = new Date().toISOString();
+            lnk.editor = { nickname: currentUser.nickname, avatar_url: currentUser.avatarUrl };
           } else {
             lnk.title = title;
             lnk.url = normalized;

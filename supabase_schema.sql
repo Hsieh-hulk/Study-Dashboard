@@ -69,8 +69,12 @@ CREATE TABLE IF NOT EXISTS public.resource_links (
   title TEXT NOT NULL,
   url TEXT NOT NULL,
   created_by UUID REFERENCES public.profiles(id) ON DELETE SET NULL,
-  created_at TIMESTAMPTZ DEFAULT NOW()
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  last_edited_by UUID CONSTRAINT fk_resource_links_last_editor REFERENCES public.profiles(id) ON DELETE SET NULL,
+  last_edited_at TIMESTAMPTZ DEFAULT NOW()
 );
+ALTER TABLE public.resource_links ADD COLUMN IF NOT EXISTS last_edited_by UUID CONSTRAINT fk_resource_links_last_editor REFERENCES public.profiles(id) ON DELETE SET NULL;
+ALTER TABLE public.resource_links ADD COLUMN IF NOT EXISTS last_edited_at TIMESTAMPTZ DEFAULT NOW();
 
 -- =================================================================
 -- 啟用 Row Level Security (RLS) 權限防護
