@@ -762,6 +762,7 @@
 
       try {
         let query = supabaseClient.from('subjects').select('*, ranges(*, resource_links(*, creator:profiles!resource_links_created_by_fkey(nickname, avatar_url), editor:profiles!fk_resource_links_last_editor(nickname, avatar_url)))');
+        
         if (currentDashboardContext === 'personal') {
           const activeFolder = getActiveFolder();
           if (!activeFolder) {
@@ -777,50 +778,93 @@
         let { data, error } = await query;
         if (error) throw error;
 
-        if (data && data.length > 0) {
-          const loadedSubs = data.map(sub => ({
+        if (currentDashboardContext !== 'personal') {
+          if (!state.groupFolders) state.groupFolders = {};
+          if (!state.groupFolders[currentDashboardContext]) {
+            state.groupFolders[currentDashboardContext] = { folders: [], activeFolderId: null };
+          }
+          
+          let parsedFoldersMap = new Map();
+          let parsedSubjects = [];
+          
+          // Parse folders from meta subjects or infer from normal subjects
+          (data || []).forEach(sub => {
+            if (sub.name === '___FOLDER_META___') {
+              const parts = (sub.preset_mode || '').split('|');
+              if (parts.length >= 3) {
+                const fId = parts[0];
+                const fName = parts[1];
+                const fMode = parts[2];
+                if (!parsedFoldersMap.has(fId)) {
+                  parsedFoldersMap.set(fId, { id: fId, name: fName, preset_mode: fMode, subjects: [] });
+                }
+              }
+            } else {
+              parsedSubjects.push(sub);
+            }
+          });
+
+          // Re-construct loaded subjects
+          const loadedSubs = parsedSubjects.map(sub => ({
             id: sub.id,
             name: sub.name,
             user_id: sub.user_id,
             group_id: sub.group_id,
             preset_mode: sub.preset_mode,
             ranges: (sub.ranges || []).map(rng => ({
-              id: rng.id,
-              name: rng.name,
-              subject_id: rng.subject_id,
+              id: rng.id, name: rng.name, subject_id: rng.subject_id,
               links: (rng.resource_links || []).map(lnk => ({
-                id: lnk.id,
-                title: lnk.title,
-                url: lnk.url,
-                range_id: lnk.range_id,
-                created_by: lnk.created_by,
-                last_edited_by: lnk.last_edited_by,
-                last_edited_at: lnk.last_edited_at,
-                editor: lnk.editor || null,
-                creator: lnk.creator || null
+                id: lnk.id, title: lnk.title, url: lnk.url, range_id: lnk.range_id, created_by: lnk.created_by,
+                last_edited_by: lnk.last_edited_by, last_edited_at: lnk.last_edited_at, editor: lnk.editor || null, creator: lnk.creator || null
               }))
             }))
           }));
+          
+          // Assign subjects to folders based on preset_mode (which stores folder id)
+          loadedSubs.forEach(sub => {
+            const fId = sub.preset_mode;
+            if (fId) {
+              if (!parsedFoldersMap.has(fId)) {
+                // Infer folder if meta was missing for some reason
+                parsedFoldersMap.set(fId, { id: fId, name: '未命名專案', preset_mode: 'blank', subjects: [] });
+              }
+              parsedFoldersMap.get(fId).subjects.push(sub);
+            }
+          });
 
-          if (currentDashboardContext === 'personal') {
+          // Restore local active folder id if valid
+          let newFolders = Array.from(parsedFoldersMap.values());
+          const oldActiveId = state.groupFolders[currentDashboardContext].activeFolderId;
+          
+          state.groupFolders[currentDashboardContext].folders = newFolders;
+          if (newFolders.length > 0 && (!oldActiveId || !newFolders.find(f => f.id === oldActiveId))) {
+            state.groupFolders[currentDashboardContext].activeFolderId = newFolders[0].id;
+          }
+          state.subjects = []; // Group mode subjects now live in the folder
+        } else {
+          // Personal Mode processing
+          if (data && data.length > 0) {
+            const loadedSubs = data.map(sub => ({
+              id: sub.id, name: sub.name, user_id: sub.user_id, group_id: sub.group_id, preset_mode: sub.preset_mode,
+              ranges: (sub.ranges || []).map(rng => ({
+                id: rng.id, name: rng.name, subject_id: rng.subject_id,
+                links: (rng.resource_links || []).map(lnk => ({
+                  id: lnk.id, title: lnk.title, url: lnk.url, range_id: lnk.range_id, created_by: lnk.created_by,
+                  last_edited_by: lnk.last_edited_by, last_edited_at: lnk.last_edited_at, editor: lnk.editor || null, creator: lnk.creator || null
+                }))
+              }))
+            }));
             const activeFolder = getActiveFolder();
             if (activeFolder) activeFolder.subjects = loadedSubs;
           } else {
-            state.subjects = loadedSubs;
-          }
-        } else if (currentDashboardContext === 'personal') {
-          const activeFolder = getActiveFolder();
-          if (activeFolder) {
-            // Prevent wiping local temporary subjects (樂觀 UI) if they already exist
-            if (activeFolder.subjects.length === 0) {
+            const activeFolder = getActiveFolder();
+            if (activeFolder && activeFolder.subjects.length === 0) {
               const presetObj = PRESET_MODES[activeFolder.preset_mode];
               if (presetObj && presetObj.subjects && presetObj.subjects.length > 0) {
                 syncFolderSubjectsToCloud(activeFolder);
               }
             }
           }
-        } else {
-          state.subjects = [];
         }
 
         validateStateDefensive();
@@ -833,40 +877,63 @@
       }
     }
 
-    async function syncFolderSubjectsToCloud(folder) {
+    async function syncFolderSubjectsToCloud(folder, isUpdateMetaOnly = false) {
       if (!supabaseClient || !currentUser) return;
+      
+      const isPersonal = currentDashboardContext === 'personal';
+      const gId = isPersonal ? null : currentDashboardContext;
+      const uId = isPersonal ? currentUser.id : null;
+      
+      let seedPayload = [];
+      const metaMode = `${folder.id}|${folder.name}|${folder.preset_mode}`;
+      
+      // Add meta subject
+      seedPayload.push({
+        name: '___FOLDER_META___',
+        user_id: uId,
+        group_id: gId,
+        preset_mode: metaMode
+      });
       
       const localSubjects = folder.subjects.filter(s => typeof s.id === 'string' && s.id.startsWith('sub_'));
       const presetObj = PRESET_MODES[folder.preset_mode];
       
-      let seedPayload = [];
-      if (localSubjects.length > 0) {
-        seedPayload = localSubjects.map(s => ({
-          name: s.name, user_id: currentUser.id, group_id: null, preset_mode: folder.id
-        }));
-      } else if (folder.subjects.length === 0 && presetObj && presetObj.subjects) {
-        seedPayload = presetObj.subjects.map(s => ({
-          name: s.name, user_id: currentUser.id, group_id: null, preset_mode: folder.id
-        }));
-      } else {
-        return;
+      if (!isUpdateMetaOnly) {
+        if (localSubjects.length > 0) {
+          localSubjects.forEach(s => {
+            seedPayload.push({ name: s.name, user_id: uId, group_id: gId, preset_mode: folder.id });
+          });
+        } else if (folder.subjects.length === 0 && presetObj && presetObj.subjects) {
+          presetObj.subjects.forEach(s => {
+            seedPayload.push({ name: s.name, user_id: uId, group_id: gId, preset_mode: folder.id });
+          });
+        }
       }
       
       try {
+        if (isUpdateMetaOnly) {
+           let delQ = supabaseClient.from('subjects').delete().eq('name', '___FOLDER_META___').like('preset_mode', `${folder.id}|%`);
+           if (isPersonal) delQ = delQ.eq('user_id', currentUser.id).is('group_id', null);
+           else delQ = delQ.eq('group_id', gId);
+           await delQ;
+        }
+
         const { data: inserted, error: seedErr } = await supabaseClient.from('subjects').insert(seedPayload).select();
         if (seedErr) throw seedErr;
-        if (inserted) {
+        
+        if (inserted && !isUpdateMetaOnly) {
+          const insertedNormal = inserted.filter(s => s.name !== '___FOLDER_META___');
           if (localSubjects.length > 0) {
-            inserted.forEach((dbSub, idx) => {
+            insertedNormal.forEach((dbSub, idx) => {
               if (localSubjects[idx]) localSubjects[idx].id = dbSub.id;
             });
           } else {
-            folder.subjects = inserted.map(s => ({
-              id: s.id, name: s.name, user_id: s.user_id, group_id: null, preset_mode: folder.id, ranges: []
+            folder.subjects = insertedNormal.map(s => ({
+              id: s.id, name: s.name, user_id: s.user_id, group_id: s.group_id, preset_mode: folder.id, ranges: []
             }));
           }
           saveState();
-          if (state.activeFolderId === folder.id) renderAll();
+          if (getContextActiveFolderId() === folder.id) renderAll();
         }
       } catch (err) {
         console.error('Background sync failed:', err);
@@ -1084,14 +1151,12 @@
     }
 
     function getActiveFolder() {
-      if (!state.folders) return null;
-      return state.folders.find(f => f.id === state.activeFolderId) || null;
+      const contextFolders = getContextFolders();
+      const activeId = getContextActiveFolderId();
+      return contextFolders.find(f => f.id === activeId) || null;
     }
 
     function getFilteredSubjects() {
-      if (currentDashboardContext !== 'personal') {
-        return state.subjects || [];
-      }
       const activeFolder = getActiveFolder();
       return activeFolder ? (activeFolder.subjects || []) : [];
     }
@@ -1867,15 +1932,44 @@
       lucide.createIcons();
     }
 
+    function getContextFolders() {
+      if (currentDashboardContext === 'personal') {
+        return state.folders || [];
+      } else {
+        if (!state.groupFolders) state.groupFolders = {};
+        if (!state.groupFolders[currentDashboardContext]) {
+          state.groupFolders[currentDashboardContext] = { folders: [], activeFolderId: null };
+        }
+        return state.groupFolders[currentDashboardContext].folders || [];
+      }
+    }
+
+    function getContextActiveFolderId() {
+      if (currentDashboardContext === 'personal') return state.activeFolderId;
+      return state.groupFolders?.[currentDashboardContext]?.activeFolderId || null;
+    }
+
+    function setContextActiveFolderId(id) {
+      if (currentDashboardContext === 'personal') {
+        state.activeFolderId = id;
+      } else {
+        if (!state.groupFolders) state.groupFolders = {};
+        if (!state.groupFolders[currentDashboardContext]) {
+          state.groupFolders[currentDashboardContext] = { folders: [], activeFolderId: null };
+        }
+        state.groupFolders[currentDashboardContext].activeFolderId = id;
+      }
+      saveState();
+    }
+
     function renderFolderBar() {
       const container = document.getElementById('folderSelectorBar');
       if (!container) return;
-      if (currentDashboardContext !== 'personal') {
-        container.innerHTML = `<div class="text-xs font-bold text-[var(--hh-paragraph)] opacity-80 py-1.5">👥 群組共享模式</div>`;
-        return;
-      }
+      
+      const contextFolders = getContextFolders();
+      const activeId = getContextActiveFolderId();
 
-      if (state.folders.length === 0) {
+      if (contextFolders.length === 0) {
         container.innerHTML = `
           <button onclick="promptCreateFolderModal()" class="w-full hh-btn-primary px-3 py-2 text-xs flex items-center justify-center gap-1.5 shadow-sm">
             <i data-lucide="folder-plus" class="w-4 h-4"></i>
@@ -1886,7 +1980,7 @@
         return;
       }
 
-      let options = state.folders.map(f => `<option value="${f.id}" ${f.id === state.activeFolderId ? 'selected' : ''}>${escapeHtml(f.name)}</option>`).join('');
+      let options = contextFolders.map(f => `<option value="${f.id}" ${f.id === activeId ? 'selected' : ''}>${escapeHtml(f.name)}</option>`).join('');
 
       container.innerHTML = `
         <div class="relative flex-1">
@@ -1908,8 +2002,7 @@
       `;
 
       document.getElementById('folderSelect').addEventListener('change', (e) => {
-        state.activeFolderId = e.target.value;
-        saveState();
+        setContextActiveFolderId(e.target.value);
         renderAll(); // 樂觀 UI：瞬間切換顯示本地快取
         if (supabaseClient) loadDashboardData(); // 背景更新雲端數據
       });
@@ -1960,30 +2053,32 @@
             }));
           }
 
-          state.folders.push({
+          const contextFolders = getContextFolders();
+          const newFolder = {
             id: folderId,
             name: name,
             preset_mode: mode,
             subjects: initSubjects
-          });
-          state.activeFolderId = folderId;
-          saveState();
+          };
+          contextFolders.push(newFolder);
+          setContextActiveFolderId(folderId);
 
-          renderAll(); // 樂觀 UI：瞬間渲染新增的資料夾與預設科目
+          renderAll();
           closeModal();
           showToast(`已建立專案「${name}」`, 'success');
           
           if (supabaseClient) {
-            // 背景同步寫入雲端，不阻塞畫面
-            syncFolderSubjectsToCloud(state.folders.find(f => f.id === folderId));
-            loadDashboardData(); // 可選：發起全域同步以確保狀態一致
+            syncFolderSubjectsToCloud(newFolder);
+            loadDashboardData();
           }
         }
       });
     }
 
     function promptEditFolderModal() {
-      const activeFolder = getActiveFolder();
+      const activeFolderId = getContextActiveFolderId();
+      const contextFolders = getContextFolders();
+      const activeFolder = contextFolders.find(f => f.id === activeFolderId);
       if (!activeFolder) return;
       openModal({
         title: '重新命名專案',
@@ -1996,10 +2091,15 @@
         `,
         confirmText: '儲存',
         onConfirm: () => {
-          const name = document.getElementById('inputEditFolderName').value.trim();
-          if (name) {
-            activeFolder.name = name;
+          const val = document.getElementById('inputEditFolderName').value.trim();
+          if (val) {
+            const folder = contextFolders.find(f => f.id === activeFolder.id);
+            if (folder) folder.name = val;
             saveState();
+
+            if (supabaseClient && currentDashboardContext !== 'personal') {
+              syncFolderSubjectsToCloud(folder, true);
+            }
             renderAll();
             showToast('專案名稱已更新', 'success');
           }
@@ -2009,7 +2109,9 @@
     }
 
     function promptDeleteFolderModal() {
-      const activeFolder = getActiveFolder();
+      const activeFolderId = getContextActiveFolderId();
+      const contextFolders = getContextFolders();
+      const activeFolder = contextFolders.find(f => f.id === activeFolderId);
       if (!activeFolder) return;
       openModal({
         title: '刪除專案確認',
@@ -2023,12 +2125,29 @@
           </p>
         `,
         onConfirm: async () => {
-          if (supabaseClient && currentUser) {
-            await supabaseClient.from('subjects').delete().eq('user_id', currentUser.id).is('group_id', null).eq('preset_mode', activeFolder.id);
+          if (currentDashboardContext === 'personal') {
+            state.folders = contextFolders.filter(f => f.id !== activeFolder.id);
+            state.activeFolderId = state.folders.length > 0 ? state.folders[0].id : null;
+          } else {
+            if (state.groupFolders && state.groupFolders[currentDashboardContext]) {
+              state.groupFolders[currentDashboardContext].folders = contextFolders.filter(f => f.id !== activeFolder.id);
+              state.groupFolders[currentDashboardContext].activeFolderId = state.groupFolders[currentDashboardContext].folders.length > 0 
+                ? state.groupFolders[currentDashboardContext].folders[0].id : null;
+            }
           }
-          state.folders = state.folders.filter(f => f.id !== activeFolder.id);
-          state.activeFolderId = state.folders.length > 0 ? state.folders[0].id : null;
           saveState();
+
+          if (supabaseClient) {
+            let delQuery = supabaseClient.from('subjects').delete().eq('preset_mode', activeFolder.id);
+            if (currentDashboardContext === 'personal') {
+               delQuery = delQuery.eq('user_id', currentUser.id).is('group_id', null);
+            } else {
+               delQuery = delQuery.eq('group_id', currentDashboardContext);
+            }
+            delQuery.then(() => {
+              loadDashboardData();
+            });
+          }
           renderAll();
           closeModal();
           showToast('已刪除專案資料夾', 'info');
@@ -2356,9 +2475,10 @@
           }
 
           if (supabaseClient && currentUser) {
+            const activeFolderId = getContextActiveFolderId();
             const insertPayload = currentDashboardContext === 'personal'
-              ? { name: val, user_id: currentUser.id, group_id: null, preset_mode: state.activeFolderId }
-              : { name: val, user_id: null, group_id: currentDashboardContext };
+              ? { name: val, user_id: currentUser.id, group_id: null, preset_mode: activeFolderId }
+              : { name: val, user_id: null, group_id: currentDashboardContext, preset_mode: activeFolderId };
 
             const { data: newSub, error } = await supabaseClient.from('subjects').insert(insertPayload).select().single();
             if (error) {
@@ -2366,26 +2486,22 @@
               return;
             }
             const activeFolder = getActiveFolder();
-            if (currentDashboardContext === 'personal' && activeFolder) {
-              activeFolder.subjects.push({ id: newSub.id, name: newSub.name, preset_mode: activeFolder.id, ranges: [] });
-            } else {
-              state.subjects.push({ id: newSub.id, name: newSub.name, preset_mode: newSub.preset_mode, ranges: [] });
+            if (activeFolder) {
+              activeFolder.subjects.push({ id: newSub.id, name: newSub.name, preset_mode: newSub.preset_mode, ranges: [] });
             }
             state.activeSubjectId = newSub.id;
             state.activeRangeId = null;
           } else {
+            const activeFolderId = getContextActiveFolderId();
             const newSub = {
               id: generateId('sub'),
               name: val,
-              preset_mode: currentDashboardContext === 'personal' ? state.activeFolderId : 'senior',
+              preset_mode: activeFolderId,
               ranges: []
             };
-            if (currentDashboardContext === 'personal') {
-              const activeFolder = getActiveFolder();
-              if (activeFolder) activeFolder.subjects.push(newSub);
-            } else {
-              state.subjects.push(newSub);
-            }
+            const activeFolder = getActiveFolder();
+            if (activeFolder) activeFolder.subjects.push(newSub);
+            
             state.activeSubjectId = newSub.id;
             state.activeRangeId = null;
             saveState();
@@ -2411,27 +2527,16 @@
           </p>
         `,
         onConfirm: async () => {
-          if (supabaseClient && currentUser) {
-            const { error } = await supabaseClient.from('subjects').delete().eq('id', sub.id);
-            if (error) {
-              showToast('刪除科目失敗: ' + error.message, 'danger');
-              return;
+            if (supabaseClient && currentUser) {
+              const { error } = await supabaseClient.from('subjects').delete().eq('id', sub.id);
+              if (error) {
+                showToast('刪除科目失敗: ' + error.message, 'danger');
+                return;
+              }
             }
-            if (currentDashboardContext === 'personal') {
-              const activeFolder = getActiveFolder();
-              if (activeFolder) activeFolder.subjects = activeFolder.subjects.filter(s => s.id !== sub.id);
-            } else {
-              state.subjects = state.subjects.filter(s => s.id !== sub.id);
-            }
-          } else {
-            if (currentDashboardContext === 'personal') {
-              const activeFolder = getActiveFolder();
-              if (activeFolder) activeFolder.subjects = activeFolder.subjects.filter(s => s.id !== sub.id);
-            } else {
-              state.subjects = state.subjects.filter(s => s.id !== sub.id);
-            }
+            const activeFolder = getActiveFolder();
+            if (activeFolder) activeFolder.subjects = activeFolder.subjects.filter(s => s.id !== sub.id);
             saveState();
-          }
 
           validateStateDefensive();
           renderAll();
@@ -2834,28 +2939,18 @@
 
     function getAllSearchableSubjects() {
       const items = [];
-      if (currentDashboardContext === 'personal') {
-        if (state.folders && Array.isArray(state.folders)) {
-          state.folders.forEach(folder => {
-            if (folder.subjects && Array.isArray(folder.subjects)) {
-              folder.subjects.forEach(sub => {
-                items.push({
-                  ...sub,
-                  folderId: folder.id,
-                  folderName: folder.name
-                });
+      const contextFolders = getContextFolders();
+      if (contextFolders && Array.isArray(contextFolders)) {
+        contextFolders.forEach(folder => {
+          if (folder.subjects && Array.isArray(folder.subjects)) {
+            folder.subjects.forEach(sub => {
+              items.push({
+                ...sub,
+                folderId: folder.id,
+                folderName: folder.name
               });
-            }
-          });
-        }
-      } else {
-        const subs = state.subjects || [];
-        subs.forEach(sub => {
-          items.push({
-            ...sub,
-            folderId: null,
-            folderName: null
-          });
+            });
+          }
         });
       }
       return items;
@@ -3022,7 +3117,7 @@
       if (res.folderId && state.folders) {
         const folderExists = state.folders.some(f => f.id === res.folderId);
         if (folderExists) {
-          state.activeFolderId = res.folderId;
+          setContextActiveFolderId(res.folderId);
         }
       }
 
