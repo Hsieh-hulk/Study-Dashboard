@@ -2722,6 +2722,35 @@
       currentSearchResults = [];
     }
 
+    function getAllSearchableSubjects() {
+      const items = [];
+      if (currentDashboardContext === 'personal') {
+        if (state.folders && Array.isArray(state.folders)) {
+          state.folders.forEach(folder => {
+            if (folder.subjects && Array.isArray(folder.subjects)) {
+              folder.subjects.forEach(sub => {
+                items.push({
+                  ...sub,
+                  folderId: folder.id,
+                  folderName: folder.name
+                });
+              });
+            }
+          });
+        }
+      } else {
+        const subs = state.subjects || [];
+        subs.forEach(sub => {
+          items.push({
+            ...sub,
+            folderId: null,
+            folderName: null
+          });
+        });
+      }
+      return items;
+    }
+
     function performSearch(query) {
       const q = query.trim().toLowerCase();
       const btnClear = document.getElementById('btnClearSearch');
@@ -2731,35 +2760,61 @@
       else btnClear.classList.add('hidden');
 
       currentSearchResults = [];
+      const searchableSubjects = getAllSearchableSubjects();
 
-      state.subjects.forEach(sub => {
-        if (sub.ranges) {
+      searchableSubjects.forEach(sub => {
+        const isSubMatch = !q || sub.name.toLowerCase().includes(q);
+
+        // 1. Subject match
+        if (isSubMatch) {
+          currentSearchResults.push({
+            type: 'subject',
+            id: sub.id,
+            subjectId: sub.id,
+            folderId: sub.folderId,
+            title: sub.name,
+            subtitle: sub.folderName ? `科目 📍 ${sub.folderName}` : `科目`,
+            icon: 'book-open'
+          });
+        }
+
+        // 2. Range & Link match
+        if (sub.ranges && Array.isArray(sub.ranges)) {
           sub.ranges.forEach(rng => {
-            const isRngMatch = !q || rng.name.toLowerCase().includes(q) || sub.name.toLowerCase().includes(q);
+            const isRngNameMatch = q ? rng.name.toLowerCase().includes(q) : false;
+            const isRngMatch = !q || isRngNameMatch || (q && sub.name.toLowerCase().includes(q));
+
             if (isRngMatch) {
+              const subPath = sub.folderName ? `${sub.folderName} > ${sub.name}` : sub.name;
               currentSearchResults.push({
                 type: 'range',
                 id: rng.id,
                 subjectId: sub.id,
                 rangeId: rng.id,
+                folderId: sub.folderId,
                 title: rng.name,
-                subtitle: `單元範圍 📍 ${sub.name}`,
+                subtitle: `單元範圍 📍 ${subPath}`,
                 icon: 'bookmark'
               });
             }
 
-            if (rng.links) {
+            if (rng.links && Array.isArray(rng.links)) {
               rng.links.forEach(lnk => {
-                const isLnkMatch = !q || lnk.title.toLowerCase().includes(q) || lnk.url.toLowerCase().includes(q);
+                const isLnkTitleMatch = q ? (lnk.title || '').toLowerCase().includes(q) : false;
+                const isLnkUrlMatch = q ? (lnk.url || '').toLowerCase().includes(q) : false;
+                const isLnkMatch = !q || isLnkTitleMatch || isLnkUrlMatch || (q && (isRngNameMatch || sub.name.toLowerCase().includes(q)));
+
                 if (isLnkMatch) {
+                  const rngPath = sub.folderName ? `${sub.folderName} > ${sub.name} > ${rng.name}` : `${sub.name} > ${rng.name}`;
                   currentSearchResults.push({
                     type: 'link',
                     id: lnk.id,
                     subjectId: sub.id,
                     rangeId: rng.id,
                     linkId: lnk.id,
+                    folderId: sub.folderId,
                     title: lnk.title,
-                    subtitle: `學習連結 📍 ${sub.name} > ${rng.name}`,
+                    subtitle: `學習連結 📍 ${rngPath}`,
                     icon: 'external-link',
                     url: lnk.url
                   });
@@ -2853,6 +2908,14 @@
 
     function navigateToResult(res) {
       if (!res) return;
+
+      if (res.folderId && state.folders) {
+        const folderExists = state.folders.some(f => f.id === res.folderId);
+        if (folderExists) {
+          state.activeFolderId = res.folderId;
+        }
+      }
+
       state.activeSubjectId = res.subjectId;
       if (res.rangeId) state.activeRangeId = res.rangeId;
 
@@ -2866,9 +2929,11 @@
       renderAll();
       closeSearchModal();
 
-      const subObj = state.subjects.find(s => s.id === res.subjectId);
+      const visibleSubjects = getFilteredSubjects();
+      const subObj = visibleSubjects.find(s => s.id === res.subjectId);
       const subName = subObj ? subObj.name : '';
-      showToast(`已跳轉至：「${subName}${res.title ? ' > ' + res.title : ''}」`, 'success');
+      const displayTitle = res.type === 'subject' ? subName : `${subName}${res.title ? ' > ' + res.title : ''}`;
+      showToast(`已跳轉至：「${displayTitle}」`, 'success');
     }
 
     // --- DOM Event Listeners & Dashboard Context Event Routing ---
