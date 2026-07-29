@@ -343,10 +343,10 @@
       <!-- Search Trigger Button -->
       <button id="btnOpenSearch"
         class="w-full sm:flex-1 hh-btn-secondary px-3.5 py-2 text-xs font-bold flex items-center justify-between gap-2 shadow-sm transition hover:scale-[1.02] active:scale-[0.98]"
-        title="搜尋學習科目、單元與連結 (Ctrl + K)">
+        title="搜尋單元與連結 (Ctrl + K)">
         <div class="flex items-center gap-2 text-[var(--hh-paragraph)] opacity-80 overflow-hidden">
           <i data-lucide="search" class="w-4 h-4 text-[var(--hh-headline)] shrink-0"></i>
-          <span class="truncate">搜尋科目與連結...</span>
+          <span class="truncate">搜尋單元與連結...</span>
         </div>
         <kbd
           class="hidden sm:inline-flex items-center gap-0.5 px-2 py-0.5 text-[10px] font-mono font-bold rounded-md bg-[var(--hh-accent-ice)] text-[var(--hh-headline)] border border-[var(--hh-card-border)] shadow-xs shrink-0">
@@ -520,7 +520,7 @@
       <!-- Search Input Box Header -->
       <div class="relative flex items-center mb-4">
         <i data-lucide="search" class="w-5 h-5 absolute left-3.5 text-[var(--hh-headline)] pointer-events-none"></i>
-        <input type="text" id="searchInput" placeholder="搜尋學習科目、單元範圍或連結名稱..."
+        <input type="text" id="searchInput" placeholder="搜尋單元範圍或連結名稱..."
           class="w-full pl-11 pr-10 py-3 text-sm font-bold hh-input rounded-xl border-2" autocomplete="off">
         <button id="btnClearSearch"
           class="absolute right-3 p-1 rounded-lg hover:bg-[var(--hh-accent-ice)] text-[var(--hh-paragraph)] hidden transition"
@@ -2733,21 +2733,10 @@
       currentSearchResults = [];
 
       state.subjects.forEach(sub => {
-        if (!q || sub.name.toLowerCase().includes(q)) {
-          currentSearchResults.push({
-            type: 'subject',
-            id: sub.id,
-            subjectId: sub.id,
-            rangeId: sub.ranges && sub.ranges.length > 0 ? sub.ranges[0].id : null,
-            title: sub.name,
-            subtitle: `科目 (${sub.ranges ? sub.ranges.length : 0} 個單元範圍)`,
-            icon: 'folder'
-          });
-        }
-
         if (sub.ranges) {
           sub.ranges.forEach(rng => {
-            if (q && rng.name.toLowerCase().includes(q)) {
+            const isRngMatch = !q || rng.name.toLowerCase().includes(q) || sub.name.toLowerCase().includes(q);
+            if (isRngMatch) {
               currentSearchResults.push({
                 type: 'range',
                 id: rng.id,
@@ -2761,7 +2750,8 @@
 
             if (rng.links) {
               rng.links.forEach(lnk => {
-                if (q && (lnk.title.toLowerCase().includes(q) || lnk.url.toLowerCase().includes(q))) {
+                const isLnkMatch = !q || lnk.title.toLowerCase().includes(q) || lnk.url.toLowerCase().includes(q);
+                if (isLnkMatch) {
                   currentSearchResults.push({
                     type: 'link',
                     id: lnk.id,
