@@ -2499,6 +2499,11 @@
               <span>開啟</span>
             </a>
 
+            <button class="btn-copy-link hh-btn-secondary px-3 py-1.5 text-xs flex items-center gap-1" title="複製連結網址">
+              <i data-lucide="copy" class="w-3.5 h-3.5"></i>
+              <span>複製</span>
+            </button>
+
             <button class="btn-edit-link hh-btn-secondary px-3 py-1.5 text-xs flex items-center gap-1" title="編輯連結">
               <i data-lucide="pencil" class="w-3.5 h-3.5"></i>
               <span>編輯</span>
@@ -2509,6 +2514,14 @@
             </button>
           </div>
         `;
+
+        card.querySelector('.btn-copy-link').onclick = () => {
+          navigator.clipboard.writeText(lnk.url).then(() => {
+            showToast('已成功複製網址至剪貼簿！', 'success');
+          }).catch(err => {
+            showToast('複製失敗', 'danger');
+          });
+        };
 
         card.querySelector('.btn-edit-link').onclick = () => {
           promptEditLink(lnk);
