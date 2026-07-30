@@ -82,6 +82,26 @@
       --hh-input-bg: #1a1c23;
     }
 
+    /* 3. Pure Light (☀️ 極簡明亮 - 清新極簡高對比) */
+    :root[data-theme="light"] {
+      --hh-bg: #f8fafc;
+      --hh-headline: #0f172a;
+      --hh-paragraph: #334155;
+      --hh-card: #ffffff;
+      --hh-card-border: #cbd5e1;
+      --hh-card-hover-border: #3b82f6;
+      --hh-btn-main: #3b82f6;
+      --hh-btn-main-hover: #2563eb;
+      --hh-btn-text: #ffffff;
+      --hh-accent-blush: #e2e8f0;
+      --hh-accent-ice: #f1f5f9;
+      --hh-accent-teal: #94a3b8;
+      --hh-shadow: #94a3b8;
+      --hh-badge-bg: #e2e8f0;
+      --hh-badge-text: #1e40af;
+      --hh-input-bg: #ffffff;
+    }
+
 
 
     /* Base Body Applying Happy Hues Palette */
@@ -365,6 +385,7 @@
           class="hh-input px-3 py-1.5 text-xs font-bold rounded-xl cursor-pointer shadow-sm pr-8" title="切換色調">
           <option value="sage">🌿 舒緩森林</option>
           <option value="dusk">🌙 柔和夜讀</option>
+          <option value="light">☀️ 極簡明亮</option>
         </select>
       </div>
 
@@ -1131,7 +1152,7 @@
 
       // Load Theme (Default to 'sage' eye-care reading mode)
       const savedTheme = localStorage.getItem(THEME_KEY) || 'sage';
-      const validThemes = ['sage', 'dusk'];
+      const validThemes = ['sage', 'dusk', 'light'];
       if (!validThemes.includes(savedTheme)) {
         setTheme('sage');
         document.getElementById('themeSelector').value = 'sage';
@@ -1404,14 +1425,21 @@
         }
       } else {
         // Local / Offline mode
-        if (isReset) {
-          state.subjects = (state.subjects || []).filter(s => (s.preset_mode || 'senior') !== modeKey);
+        const activeFolder = getActiveFolder();
+        if (!activeFolder) {
+          showToast('尚未建立任何專案資料夾', 'warning');
+          return;
         }
 
-        const modeSubs = (state.subjects || []).filter(s => (s.preset_mode || 'senior') === modeKey);
+        if (isReset) {
+          activeFolder.subjects = (activeFolder.subjects || []).filter(s => (s.preset_mode || 'senior') !== modeKey);
+        }
+
+        const modeSubs = (activeFolder.subjects || []).filter(s => (s.preset_mode || 'senior') === modeKey);
         if (modeSubs.length === 0 && preset.subjects.length > 0) {
+          if (!activeFolder.subjects) activeFolder.subjects = [];
           preset.subjects.forEach((pSub, idx) => {
-            state.subjects.push({
+            activeFolder.subjects.push({
               id: `sub_${modeKey}_${Date.now()}_${idx}`,
               name: pSub.name,
               preset_mode: modeKey,
@@ -1473,22 +1501,46 @@
           if (currentUser) {
             currentUser.nickname = nickname;
             
-            let saveToSupabaseAvatarUrl = avatarUrl;
+            let finalAvatarUrl = avatarUrl || ('https://api.dicebear.com/7.x/bottts/svg?seed=' + currentUser.id);
+            let uploadedToStorage = false;
+
             if (avatarUrl.startsWith('data:image/')) {
-              localStorage.setItem(`local_avatar_${currentUser.id}`, avatarUrl);
-              saveToSupabaseAvatarUrl = `https://api.dicebear.com/7.x/bottts/svg?seed=${currentUser.id}#local`;
-              currentUser.avatarUrl = avatarUrl;
+              if (supabaseClient) {
+                const statusEl = document.getElementById('avatarUploadStatus');
+                if (statusEl) {
+                  statusEl.textContent = '上傳雲端中...';
+                  statusEl.className = 'text-xs text-[var(--hh-text-dim)] truncate max-w-[120px]';
+                }
+                try {
+                  const res = await fetch(avatarUrl);
+                  const blob = await res.blob();
+                  const filename = `${currentUser.id}_${Date.now()}.jpg`;
+                  const { data, error } = await supabaseClient.storage.from('avatars').upload(filename, blob, { upsert: true });
+                  if (error) throw error;
+                  const { data: publicUrlData } = supabaseClient.storage.from('avatars').getPublicUrl(filename);
+                  finalAvatarUrl = publicUrlData.publicUrl;
+                  uploadedToStorage = true;
+                  localStorage.removeItem(`local_avatar_${currentUser.id}`);
+                } catch (err) {
+                  console.error('Failed to upload avatar to Supabase Storage, falling back to localStorage', err);
+                  localStorage.setItem(`local_avatar_${currentUser.id}`, avatarUrl);
+                  finalAvatarUrl = `https://api.dicebear.com/7.x/bottts/svg?seed=${currentUser.id}#local`;
+                }
+              } else {
+                localStorage.setItem(`local_avatar_${currentUser.id}`, avatarUrl);
+                finalAvatarUrl = `https://api.dicebear.com/7.x/bottts/svg?seed=${currentUser.id}#local`;
+              }
             } else {
               localStorage.removeItem(`local_avatar_${currentUser.id}`);
-              currentUser.avatarUrl = avatarUrl || ('https://api.dicebear.com/7.x/bottts/svg?seed=' + currentUser.id);
-              saveToSupabaseAvatarUrl = currentUser.avatarUrl;
             }
+
+            currentUser.avatarUrl = avatarUrl.startsWith('data:image/') && !uploadedToStorage ? avatarUrl : finalAvatarUrl;
 
             if (supabaseClient) {
               await supabaseClient.from('profiles').upsert({
                 id: currentUser.id,
                 nickname: currentUser.nickname,
-                avatar_url: saveToSupabaseAvatarUrl
+                avatar_url: finalAvatarUrl
               });
             }
           }
@@ -1521,7 +1573,7 @@
             const img = new Image();
             img.onload = function() {
               const canvas = document.createElement('canvas');
-              const maxSize = 200;
+              const maxSize = 400;
               let width = img.width;
               let height = img.height;
 
@@ -1693,7 +1745,7 @@
       });
     }
 
-    function promptManageGroupsModal() {
+    async function promptManageGroupsModal() {
       let pendingHtml = '';
 
       if (pendingJoinRequests.length === 0) {
@@ -1722,6 +1774,23 @@
         }).join('');
       }
 
+      // Fetch group members if connected
+      let myGroupsWithMembers = [];
+      if (supabaseClient && myGroups.length > 0) {
+        const groupIds = myGroups.map(g => g.id);
+        const { data: membersData } = await supabaseClient
+          .from('group_members')
+          .select('group_id, role, joined_at, profiles(id, nickname, avatar_url)')
+          .in('group_id', groupIds);
+          
+        myGroupsWithMembers = myGroups.map(g => {
+          const members = membersData ? membersData.filter(m => m.group_id === g.id) : [];
+          return { ...g, members };
+        });
+      } else {
+        myGroupsWithMembers = myGroups.map(g => ({ ...g, members: [] }));
+      }
+
       openModal({
         title: '群組管理與待審核申請名單',
         icon: 'user-check',
@@ -1739,11 +1808,24 @@
 
             <div>
               <h5 class="text-xs font-black hh-headline mb-2 uppercase">我已加入的群組 (${myGroups.length})</h5>
-              <div class="space-y-1.5 max-h-36 overflow-y-auto pr-1 text-xs font-bold">
-                ${myGroups.map(g => `
-                  <div class="flex items-center justify-between p-2 rounded-lg border border-[var(--hh-card-border)] bg-[var(--hh-card)]">
-                    <span>👥 ${escapeHtml(g.name)}</span>
-                    <span class="font-mono text-[10px] bg-[var(--hh-accent-ice)] px-2 py-0.5 rounded border">碼: ${g.invite_code}</span>
+              <div class="space-y-2 max-h-60 overflow-y-auto pr-1 text-xs">
+                ${myGroupsWithMembers.map(g => `
+                  <div class="p-2.5 rounded-lg border border-[var(--hh-card-border)] bg-[var(--hh-card)]">
+                    <div class="flex items-center justify-between mb-2">
+                      <span class="font-bold">👥 ${escapeHtml(g.name)}</span>
+                      <span class="font-mono text-[10px] bg-[var(--hh-accent-ice)] px-2 py-0.5 rounded border">碼: ${g.invite_code}</span>
+                    </div>
+                    <div class="space-y-1.5 pl-1 border-l-2 border-[var(--hh-accent-teal)]">
+                      ${g.members.length > 0 ? g.members.map(m => `
+                        <div class="flex items-center gap-2">
+                          <img src="${escapeHtml(m.profiles?.avatar_url || 'https://api.dicebear.com/7.x/bottts/svg?seed=user')}" class="w-5 h-5 rounded-full object-cover border border-[var(--hh-card-border)]">
+                          <span class="font-semibold ${m.role === 'owner' ? 'text-[var(--hh-btn-main)]' : 'text-[var(--hh-paragraph)]'}">
+                            ${escapeHtml(m.profiles?.nickname || '未知使用者')}
+                          </span>
+                          ${m.role === 'owner' ? '<span class="text-[9px] bg-[var(--hh-badge-bg)] text-[var(--hh-badge-text)] px-1.5 py-0.5 rounded border border-[var(--hh-badge-text)]">建立者</span>' : ''}
+                        </div>
+                      `).join('') : '<div class="text-[10px] text-slate-400">尚無成員資料 (或處於離線狀態)</div>'}
+                    </div>
                   </div>
                 `).join('')}
               </div>
@@ -2416,11 +2498,6 @@
               <i data-lucide="external-link" class="w-3.5 h-3.5"></i>
               <span>開啟</span>
             </a>
-            
-            <button class="btn-copy-link hh-btn-secondary px-3 py-1.5 text-xs flex items-center gap-1" title="複製連結網址">
-              <i data-lucide="copy" class="w-3.5 h-3.5"></i>
-              <span>複製</span>
-            </button>
 
             <button class="btn-edit-link hh-btn-secondary px-3 py-1.5 text-xs flex items-center gap-1" title="編輯連結">
               <i data-lucide="pencil" class="w-3.5 h-3.5"></i>
@@ -2432,14 +2509,6 @@
             </button>
           </div>
         `;
-
-        card.querySelector('.btn-copy-link').onclick = () => {
-          navigator.clipboard.writeText(lnk.url).then(() => {
-            showToast('已成功複製網址至剪貼簿！', 'success');
-          }).catch(err => {
-            showToast('複製失敗', 'danger');
-          });
-        };
 
         card.querySelector('.btn-edit-link').onclick = () => {
           promptEditLink(lnk);
@@ -3228,8 +3297,9 @@
 
       // Theme Switcher Event
       const themeNamesMap = {
-        sage: '🌿 舒緩森林綠色調 (放鬆眼肌首選)',
-        dusk: '🌙 柔和夜讀色調 (低藍光防刺眼)'
+        'sage': '🌿 舒緩森林',
+        'dusk': '🌙 柔和夜讀',
+        'light': '☀️ 極簡明亮'
       };
       document.getElementById('themeSelector').addEventListener('change', (e) => {
         const val = e.target.value;

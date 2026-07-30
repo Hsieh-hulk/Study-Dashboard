@@ -340,3 +340,50 @@ GRANT ALL ON ALL SEQUENCES IN SCHEMA public TO anon, authenticated;
 ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON TABLES TO anon, authenticated;
 ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON SEQUENCES TO anon, authenticated;
 
+-- =================================================================
+-- Storage: Avatars Bucket Setup & RLS Policies
+-- =================================================================
+DO $$
+BEGIN
+  -- Create avatars bucket if it doesn't exist
+  INSERT INTO storage.buckets (id, name, public)
+  VALUES ('avatars', 'avatars', true)
+  ON CONFLICT (id) DO NOTHING;
+END $$;
+
+-- Enable RLS on storage.objects
+ALTER TABLE storage.objects ENABLE ROW LEVEL SECURITY;
+
+-- Policy: Anyone can read avatars
+DROP POLICY IF EXISTS "Public access to avatars" ON storage.objects;
+CREATE POLICY "Public access to avatars"
+ON storage.objects FOR SELECT
+USING (bucket_id = 'avatars');
+
+-- Policy: Authenticated users can insert their own avatar
+DROP POLICY IF EXISTS "Authenticated users can upload avatars" ON storage.objects;
+CREATE POLICY "Authenticated users can upload avatars"
+ON storage.objects FOR INSERT
+WITH CHECK (
+  bucket_id = 'avatars' AND 
+  auth.role() = 'authenticated'
+);
+
+-- Policy: Authenticated users can update their own avatar
+DROP POLICY IF EXISTS "Authenticated users can update their avatars" ON storage.objects;
+CREATE POLICY "Authenticated users can update their avatars"
+ON storage.objects FOR UPDATE
+USING (
+  bucket_id = 'avatars' AND 
+  auth.role() = 'authenticated'
+);
+
+-- Policy: Authenticated users can delete their own avatar
+DROP POLICY IF EXISTS "Authenticated users can delete their avatars" ON storage.objects;
+CREATE POLICY "Authenticated users can delete their avatars"
+ON storage.objects FOR DELETE
+USING (
+  bucket_id = 'avatars' AND 
+  auth.role() = 'authenticated'
+);
+
