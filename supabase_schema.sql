@@ -135,7 +135,16 @@ CREATE POLICY "Authenticated users can insert group members"
 
 DROP POLICY IF EXISTS "Group members can delete members" ON public.group_members;
 CREATE POLICY "Group members can delete members"
-  ON public.group_members FOR DELETE USING (auth.role() = 'authenticated');
+  ON public.group_members FOR DELETE USING (
+    (user_id = auth.uid()) OR 
+    EXISTS (SELECT 1 FROM public.groups g WHERE g.id = group_members.group_id AND g.owner_id = auth.uid())
+  );
+
+DROP POLICY IF EXISTS "Group owners can update members" ON public.group_members;
+CREATE POLICY "Group owners can update members"
+  ON public.group_members FOR UPDATE USING (
+    EXISTS (SELECT 1 FROM public.groups g WHERE g.id = group_members.group_id AND g.owner_id = auth.uid())
+  );
 
 -- -----------------------------------------------------------------
 -- Group Join Requests RLS Policies
@@ -351,8 +360,8 @@ BEGIN
   ON CONFLICT (id) DO NOTHING;
 END $$;
 
--- Enable RLS on storage.objects
-ALTER TABLE storage.objects ENABLE ROW LEVEL SECURITY;
+-- Enable RLS on storage.objects (Commented out: RLS is enabled by default, and non-owner roles cannot run ALTER TABLE on storage.objects)
+-- ALTER TABLE storage.objects ENABLE ROW LEVEL SECURITY;
 
 -- Policy: Anyone can read avatars
 DROP POLICY IF EXISTS "Public access to avatars" ON storage.objects;

@@ -431,6 +431,10 @@
               <h2 class="font-extrabold text-sm tracking-wide hh-headline uppercase">學習資料</h2>
             </div>
             <div class="flex items-center gap-1.5">
+              <button id="btnImportPersonalData" class="hidden hh-btn-secondary px-3 py-1.5 text-xs flex items-center gap-1" title="匯入個人學習資料">
+                <i data-lucide="download" class="w-4 h-4"></i>
+                <span class="hidden sm:inline">匯入</span>
+              </button>
               <button id="btnAddSubject" class="hh-btn-primary px-3 py-1.5 text-xs flex items-center gap-1">
                 <i data-lucide="plus" class="w-4 h-4"></i>
                 <span>新增科目</span>
@@ -1745,6 +1749,134 @@
       });
     }
 
+    async function deleteGroup(groupId, groupName) {
+      if (!supabaseClient) {
+        showToast('需要連接資料庫才能刪除群組', 'danger');
+        return;
+      }
+      openModal({
+        title: '⚠️ 刪除群組確認',
+        icon: 'alert-triangle',
+        contentHtml: `
+          <div class="text-sm text-[var(--hh-paragraph)] mb-3">
+            您確定要刪除群組 <strong>${escapeHtml(groupName)}</strong> 嗎？<br>
+            這將會刪除群組內所有的科目、單元與學習資源，且<span class="text-rose-500 font-bold">無法復原</span>。<br>
+            請在下方輸入群組名稱以確認刪除：
+          </div>
+          <input type="text" id="inputConfirmGroupName" class="w-full bg-[var(--hh-card)] border border-[var(--hh-card-border)] rounded-xl px-3 py-2 text-sm text-[var(--hh-headline)] placeholder-slate-400 focus:outline-none focus:border-[var(--hh-accent-teal)]" placeholder="請輸入 ${escapeHtml(groupName)}">
+        `,
+        confirmText: '確定刪除',
+        onConfirm: async () => {
+          const inputVal = document.getElementById('inputConfirmGroupName').value.trim();
+          if (inputVal !== groupName) {
+            showToast('群組名稱輸入錯誤，刪除已取消', 'danger');
+            return;
+          }
+          const { error } = await supabaseClient.from('groups').delete().eq('id', groupId);
+          if (error) {
+            showToast('刪除群組失敗: ' + error.message, 'danger');
+          } else {
+            showToast('已成功刪除群組', 'success');
+            if (currentDashboardContext === groupId) {
+              await switchDashboardContext('personal');
+            } else {
+              await loadUserGroups();
+            }
+          }
+          closeModal();
+        }
+      });
+    }
+
+    async function kickGroupMember(groupId, userId, nickname, groupName) {
+      if (!supabaseClient) return;
+      openModal({
+        title: '⚠️ 剔除成員確認',
+        icon: 'alert-triangle',
+        contentHtml: `
+          <div class="text-sm text-[var(--hh-paragraph)]">
+            確定要將成員 <strong>${escapeHtml(nickname)}</strong> 踢除出群組 <strong>${escapeHtml(groupName)}</strong> 嗎？
+          </div>
+        `,
+        confirmText: '確定踢除',
+        onConfirm: async () => {
+          const { error } = await supabaseClient.from('group_members').delete().eq('group_id', groupId).eq('user_id', userId);
+          if (error) {
+            showToast('踢除成員失敗: ' + error.message, 'danger');
+          } else {
+            showToast('已成功踢除成員', 'success');
+            await loadUserGroups();
+          }
+          closeModal();
+        }
+      });
+    }
+
+    async function leaveGroup(groupId, groupName) {
+      if (!supabaseClient || !currentUser) return;
+      
+      const membership = myGroups.find(g => g.id === groupId);
+      if (!membership) return;
+
+      openModal({
+        title: '⚠️ 退出群組確認',
+        icon: 'log-out',
+        contentHtml: `
+          <div class="text-sm text-[var(--hh-paragraph)]">
+            確定要退出群組 <strong>${escapeHtml(groupName)}</strong> 嗎？
+          </div>
+        `,
+        confirmText: '確定退出',
+        onConfirm: async () => {
+          const isOwner = membership.owner_id === currentUser.id;
+          
+          if (isOwner) {
+            const { data: members, error: memErr } = await supabaseClient
+              .from('group_members')
+              .select('*')
+              .eq('group_id', groupId)
+              .neq('user_id', currentUser.id)
+              .order('joined_at', { ascending: true });
+              
+            if (memErr) {
+              showToast('退出群組失敗: 讀取成員錯誤', 'danger');
+              closeModal();
+              return;
+            }
+
+            if (members && members.length > 0) {
+              const nextOwner = members[0];
+              await supabaseClient.from('groups').update({ owner_id: nextOwner.user_id }).eq('id', groupId);
+              await supabaseClient.from('group_members').update({ role: 'owner' }).eq('group_id', groupId).eq('user_id', nextOwner.user_id);
+              const { error: delErr } = await supabaseClient.from('group_members').delete().eq('group_id', groupId).eq('user_id', currentUser.id);
+              if (delErr) {
+                 showToast('退出群組時發生錯誤', 'danger');
+              } else {
+                 showToast('已退出群組，建立者權限已自動移交', 'success');
+              }
+            } else {
+              await supabaseClient.from('groups').delete().eq('id', groupId);
+              showToast('已退出並自動解散群組', 'success');
+            }
+          } else {
+            const { error: delErr } = await supabaseClient.from('group_members').delete().eq('group_id', groupId).eq('user_id', currentUser.id);
+            if (delErr) {
+               showToast('退出群組失敗: ' + delErr.message, 'danger');
+            } else {
+               showToast('已成功退出群組', 'success');
+            }
+          }
+          
+          if (currentDashboardContext === groupId) {
+            await switchDashboardContext('personal');
+          } else {
+            await loadUserGroups();
+          }
+          closeModal();
+        }
+      });
+    }
+
     async function promptManageGroupsModal() {
       let pendingHtml = '';
 
@@ -1809,25 +1941,36 @@
             <div>
               <h5 class="text-xs font-black hh-headline mb-2 uppercase">我已加入的群組 (${myGroups.length})</h5>
               <div class="space-y-2 max-h-60 overflow-y-auto pr-1 text-xs">
-                ${myGroupsWithMembers.map(g => `
+                ${myGroupsWithMembers.map(g => {
+                  const isOwner = currentUser && g.owner_id === currentUser.id;
+                  return `
                   <div class="p-2.5 rounded-lg border border-[var(--hh-card-border)] bg-[var(--hh-card)]">
                     <div class="flex items-center justify-between mb-2">
                       <span class="font-bold">👥 ${escapeHtml(g.name)}</span>
-                      <span class="font-mono text-[10px] bg-[var(--hh-accent-ice)] px-2 py-0.5 rounded border">碼: ${g.invite_code}</span>
+                      <div class="flex items-center gap-1.5">
+                        <span class="font-mono text-[10px] bg-[var(--hh-accent-ice)] px-2 py-0.5 rounded border">碼: ${g.invite_code}</span>
+                        ${isOwner ? `<button class="btn-delete-group text-rose-500 hover:text-rose-600 transition p-1 rounded hover:bg-rose-500/10" data-id="${g.id}" data-name="${escapeHtml(g.name)}" title="刪除群組"><i data-lucide="trash-2" class="w-3.5 h-3.5"></i></button>` : ''}
+                        <button class="btn-leave-group text-slate-400 hover:text-rose-500 transition p-1 rounded hover:bg-slate-100" data-id="${g.id}" data-name="${escapeHtml(g.name)}" title="退出群組"><i data-lucide="log-out" class="w-3.5 h-3.5"></i></button>
+                      </div>
                     </div>
                     <div class="space-y-1.5 pl-1 border-l-2 border-[var(--hh-accent-teal)]">
                       ${g.members.length > 0 ? g.members.map(m => `
-                        <div class="flex items-center gap-2">
-                          <img src="${escapeHtml(m.profiles?.avatar_url || 'https://api.dicebear.com/7.x/bottts/svg?seed=user')}" class="w-5 h-5 rounded-full object-cover border border-[var(--hh-card-border)]">
-                          <span class="font-semibold ${m.role === 'owner' ? 'text-[var(--hh-btn-main)]' : 'text-[var(--hh-paragraph)]'}">
-                            ${escapeHtml(m.profiles?.nickname || '未知使用者')}
-                          </span>
-                          ${m.role === 'owner' ? '<span class="text-[9px] bg-[var(--hh-badge-bg)] text-[var(--hh-badge-text)] px-1.5 py-0.5 rounded border border-[var(--hh-badge-text)]">建立者</span>' : ''}
+                        <div class="flex items-center justify-between gap-2">
+                          <div class="flex items-center gap-2">
+                            <img src="${escapeHtml(m.profiles?.avatar_url || 'https://api.dicebear.com/7.x/bottts/svg?seed=user')}" class="w-5 h-5 rounded-full object-cover border border-[var(--hh-card-border)]">
+                            <span class="font-semibold ${m.role === 'owner' ? 'text-[var(--hh-btn-main)]' : 'text-[var(--hh-paragraph)]'}">
+                              ${escapeHtml(m.profiles?.nickname || '未知使用者')}
+                            </span>
+                            ${m.role === 'owner' ? '<span class="text-[9px] bg-[var(--hh-badge-bg)] text-[var(--hh-badge-text)] px-1.5 py-0.5 rounded border border-[var(--hh-badge-text)]">建立者</span>' : ''}
+                          </div>
+                          ${(isOwner && m.profiles?.id !== currentUser.id) ? `
+                            <button class="btn-kick-member text-[10px] bg-rose-500/10 text-rose-500 px-2 py-1 rounded-md hover:bg-rose-500 hover:text-white transition font-bold" data-group-id="${g.id}" data-user-id="${m.profiles?.id}" data-nickname="${escapeHtml(m.profiles?.nickname || '未知')}" data-group-name="${escapeHtml(g.name)}">踢除</button>
+                          ` : ''}
                         </div>
                       `).join('') : '<div class="text-[10px] text-slate-400">尚無成員資料 (或處於離線狀態)</div>'}
                     </div>
                   </div>
-                `).join('')}
+                `}).join('')}
               </div>
             </div>
           </div>
@@ -1863,6 +2006,27 @@
             await loadUserGroups();
             closeModal();
           }
+        };
+      });
+
+      document.querySelectorAll('.btn-delete-group').forEach(btn => {
+        btn.onclick = (e) => {
+          const btnEl = e.currentTarget;
+          deleteGroup(btnEl.dataset.id, btnEl.dataset.name);
+        };
+      });
+
+      document.querySelectorAll('.btn-leave-group').forEach(btn => {
+        btn.onclick = (e) => {
+          const btnEl = e.currentTarget;
+          leaveGroup(btnEl.dataset.id, btnEl.dataset.name);
+        };
+      });
+
+      document.querySelectorAll('.btn-kick-member').forEach(btn => {
+        btn.onclick = (e) => {
+          const btnEl = e.currentTarget;
+          kickGroupMember(btnEl.dataset.groupId, btnEl.dataset.userId, btnEl.dataset.nickname, btnEl.dataset.groupName);
         };
       });
     }
@@ -1958,6 +2122,193 @@
           "'": '&#039;'
         }[m];
       });
+    }
+
+    // --- Personal Data Import Modal ---
+    async function promptImportPersonalDataModal() {
+      if (!supabaseClient || currentDashboardContext === 'personal') return;
+
+      const currentGroupId = currentDashboardContext;
+      const groupData = myGroups.find(g => g.id === currentGroupId);
+      if (!groupData || groupData.owner_id !== currentUser.id) return;
+
+      // 1. Fetch all personal subjects, ranges, and resource links
+      const { data: pSubjects, error: subErr } = await supabaseClient
+        .from('subjects')
+        .select('*')
+        .eq('user_id', currentUser.id)
+        .is('group_id', null)
+        .order('created_at', { ascending: true });
+
+      if (subErr || !pSubjects || pSubjects.length === 0) {
+        Swal.fire('無資料', '您的個人雲端目前沒有任何科目可以匯入。', 'info');
+        return;
+      }
+
+      // Fetch ranges and links for personal subjects
+      const subIds = pSubjects.map(s => s.id);
+      const { data: pRanges, error: rngErr } = await supabaseClient
+        .from('ranges')
+        .select('*')
+        .in('subject_id', subIds);
+
+      const rangeIds = (pRanges || []).map(r => r.id);
+      const { data: pLinks, error: lnkErr } = await supabaseClient
+        .from('resource_links')
+        .select('*')
+        .in('range_id', rangeIds.length > 0 ? rangeIds : ['00000000-0000-0000-0000-000000000000']); // Fallback to avoid empty array error
+
+      // 2. Render Checkbox UI
+      const contentHtml = `
+        <div class="space-y-4">
+          <div class="p-3 bg-[var(--hh-accent-ice)] rounded-xl border border-[var(--hh-card-border)] mb-4">
+            <h4 class="font-bold text-xs mb-1">💡 智慧合併說明</h4>
+            <p class="text-[11px] opacity-80 leading-relaxed">此功能將把您在個人雲端建立的科目、單元與連結複製到此群組。如果群組已有同名科目或單元將會自動進行合併，相同的連結會自動跳過避免重複。</p>
+          </div>
+          
+          <div class="flex items-center justify-between mb-2">
+            <h4 class="font-bold text-sm text-[var(--hh-headline)]">選擇要匯入的個人科目</h4>
+            <button id="btnImportSelectAll" class="text-xs font-bold text-blue-500 hover:underline">全選/取消全選</button>
+          </div>
+          <div class="max-h-60 overflow-y-auto pr-2 space-y-2" id="importSubjectList">
+            ${pSubjects.map(s => {
+              const rCount = (pRanges || []).filter(r => r.subject_id === s.id).length;
+              return `
+                <label class="flex items-center p-3 rounded-xl border border-[var(--hh-card-border)] bg-[var(--hh-card)] hover:bg-[var(--hh-bg-main)] cursor-pointer transition">
+                  <input type="checkbox" value="${s.id}" class="import-subject-cb w-4 h-4 text-blue-600 rounded mr-3" checked>
+                  <div class="flex-1">
+                    <div class="font-bold text-sm text-[var(--hh-headline)]">${escapeHTML(s.name)}</div>
+                    <div class="text-[10px] text-[var(--hh-paragraph)] opacity-70">包含 ${rCount} 個單元範圍</div>
+                  </div>
+                </label>
+              `;
+            }).join('')}
+          </div>
+        </div>
+      `;
+
+      openModal({
+        title: '匯入個人學習資料',
+        icon: 'download',
+        contentHtml,
+        confirmText: '開始匯入',
+        onConfirm: async () => {
+          const checkboxes = document.querySelectorAll('.import-subject-cb:checked');
+          if (checkboxes.length === 0) {
+            Swal.showValidationMessage('請至少選擇一個科目');
+            return false;
+          }
+
+          const selectedSubIds = Array.from(checkboxes).map(cb => cb.value);
+          if (selectedSubIds.length === 0) return true;
+
+          closeModal();
+          Swal.fire({
+            title: '匯入中...',
+            text: '正在進行智慧合併與複製，請稍候。',
+            allowOutsideClick: false,
+            didOpen: () => Swal.showLoading()
+          });
+
+          try {
+            const targetFolderId = state.groupFolders[currentGroupId]?.activeFolderId || 'blank';
+            let importedSubsCount = 0;
+            let importedRangesCount = 0;
+            let importedLinksCount = 0;
+
+            // Fetch current group data for Smart Merge
+            const { data: gSubjects } = await supabaseClient.from('subjects').select('*').eq('group_id', currentGroupId).eq('preset_mode', targetFolderId);
+            const gSubIds = (gSubjects || []).map(s => s.id);
+            const { data: gRanges } = await supabaseClient.from('ranges').select('*').in('subject_id', gSubIds.length > 0 ? gSubIds : ['00000000-0000-0000-0000-000000000000']);
+            const gRangeIds = (gRanges || []).map(r => r.id);
+            const { data: gLinks } = await supabaseClient.from('resource_links').select('*').in('range_id', gRangeIds.length > 0 ? gRangeIds : ['00000000-0000-0000-0000-000000000000']);
+
+            const groupSubjectsMap = new Map((gSubjects || []).map(s => [s.name, s]));
+            const groupRangesMap = new Map(); // key: subject_id_range_name
+            (gRanges || []).forEach(r => groupRangesMap.set(`${r.subject_id}_${r.name}`, r));
+            const groupLinksSet = new Set(); // key: range_id_url_title
+            (gLinks || []).forEach(l => groupLinksSet.set(`${l.range_id}_${l.url}_${l.title}`, true));
+
+            for (const subId of selectedSubIds) {
+              const pSub = pSubjects.find(s => s.id === subId);
+              if (!pSub) continue;
+
+              // 1. Merge Subject
+              let targetSub = groupSubjectsMap.get(pSub.name);
+              if (!targetSub) {
+                const { data: newSub, error: insSubErr } = await supabaseClient.from('subjects').insert({
+                  name: pSub.name,
+                  user_id: currentUser.id,
+                  group_id: currentGroupId,
+                  preset_mode: targetFolderId
+                }).select().single();
+                if (insSubErr) throw insSubErr;
+                targetSub = newSub;
+                groupSubjectsMap.set(targetSub.name, targetSub);
+                importedSubsCount++;
+              }
+
+              // 2. Merge Ranges
+              const subRanges = (pRanges || []).filter(r => r.subject_id === pSub.id);
+              for (const pRange of subRanges) {
+                let targetRange = groupRangesMap.get(`${targetSub.id}_${pRange.name}`);
+                if (!targetRange) {
+                  const { data: newRange, error: insRngErr } = await supabaseClient.from('ranges').insert({
+                    subject_id: targetSub.id,
+                    name: pRange.name
+                  }).select().single();
+                  if (insRngErr) throw insRngErr;
+                  targetRange = newRange;
+                  groupRangesMap.set(`${targetSub.id}_${targetRange.name}`, targetRange);
+                  importedRangesCount++;
+                }
+
+                // 3. Merge Links
+                const rangeLinks = (pLinks || []).filter(l => l.range_id === pRange.id);
+                for (const pLink of rangeLinks) {
+                  const linkKey = `${targetRange.id}_${pLink.url}_${pLink.title}`;
+                  if (!groupLinksSet.has(linkKey)) {
+                    const { error: insLnkErr } = await supabaseClient.from('resource_links').insert({
+                      range_id: targetRange.id,
+                      title: pLink.title,
+                      url: pLink.url,
+                      created_by: currentUser.id,
+                      last_edited_by: currentUser.id
+                    });
+                    if (insLnkErr) throw insLnkErr;
+                    groupLinksSet.add(linkKey);
+                    importedLinksCount++;
+                  }
+                }
+              }
+            }
+
+            Swal.fire({
+              icon: 'success',
+              title: '匯入成功！',
+              text: `共匯入 ${importedSubsCount} 個科目、${importedRangesCount} 個單元與 ${importedLinksCount} 個資源連結`,
+              timer: 3000,
+              showConfirmButton: false
+            });
+            await loadDashboardData(); // Refresh UI
+          } catch (err) {
+            console.error('Import Error:', err);
+            Swal.fire('匯入失敗', err.message || '發生未知錯誤', 'error');
+          }
+        }
+      });
+
+      // Handle Select All logic
+      setTimeout(() => {
+        const btnSelectAll = document.getElementById('btnImportSelectAll');
+        if (btnSelectAll) {
+          btnSelectAll.onclick = () => {
+            const checkboxes = document.querySelectorAll('.import-subject-cb');
+            const allChecked = Array.from(checkboxes).every(cb => cb.checked);
+            checkboxes.forEach(cb => cb.checked = !allChecked);
+          };
+        }
+      }, 100);
     }
 
     // --- Custom Modal System ---
@@ -2246,6 +2597,18 @@
       const container = document.getElementById('subjectList');
       container.innerHTML = '';
       const btnAddSubject = document.getElementById('btnAddSubject');
+      const btnImportPersonalData = document.getElementById('btnImportPersonalData');
+
+      if (btnImportPersonalData) {
+        const isGroupOwner = currentDashboardContext !== 'personal' && myGroups.some(g => g.id === currentDashboardContext && g.owner_id === currentUser?.id);
+        if (isGroupOwner) {
+          btnImportPersonalData.style.display = 'flex';
+          btnImportPersonalData.classList.remove('hidden');
+        } else {
+          btnImportPersonalData.style.display = 'none';
+          btnImportPersonalData.classList.add('hidden');
+        }
+      }
 
       if (currentDashboardContext === 'personal' && state.folders.length === 0) {
         if (btnAddSubject) btnAddSubject.style.display = 'none';
@@ -3330,6 +3693,7 @@
 
       // Subject / Range Add Buttons
       document.getElementById('btnAddSubject').addEventListener('click', promptAddSubject);
+      document.getElementById('btnImportPersonalData').addEventListener('click', promptImportPersonalDataModal);
       document.getElementById('btnAddRange').addEventListener('click', promptAddRange);
 
       // Link Form Submit
