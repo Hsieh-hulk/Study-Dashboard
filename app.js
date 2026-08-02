@@ -1311,7 +1311,7 @@ async function checkSupabaseSession() {
 
             <button id="btnProfileMenu" class="hh-btn-secondary px-2.5 py-1 text-xs flex items-center gap-2 relative">
 
-              <img src="${escapeHtml(globalStore.state.currentUser.avatarUrl)}" alt="Avatar" class="w-6 h-6 rounded-full border border-[var(--hh-card-border)] object-cover">
+              <img src="${escapeHtml(globalStore.state.currentUser.avatarUrl)}" alt="Avatar" class="w-6 h-6 rounded-full border border-(--hh-card-border) object-cover">
 
               <span class="font-extrabold max-w-[90px] truncate hidden sm:inline">${escapeHtml(globalStore.state.currentUser.nickname)}</span>
 
@@ -1323,9 +1323,9 @@ async function checkSupabaseSession() {
 
             <div class="hidden group-hover:block absolute right-0 top-full pt-1.5 w-48 z-50 animate-pop-in">
 
-              <div class="hh-card bg-[var(--hh-card)] p-2 shadow-xl border-2 space-y-1 text-xs font-bold">
+              <div class="hh-card bg-(--hh-card) p-2 shadow-xl border-2 space-y-1 text-xs font-bold">
 
-                <button id="menuEditProfile" class="w-full text-left px-3 py-2 rounded-lg hover:bg-[var(--hh-accent-ice)] flex items-center gap-2">
+                <button id="menuEditProfile" class="w-full text-left px-3 py-2 rounded-lg hover:bg-(--hh-accent-ice) flex items-center gap-2">
 
                   <i data-lucide="user-cog" class="w-4 h-4"></i>
 
@@ -1333,7 +1333,7 @@ async function checkSupabaseSession() {
 
                 </button>
 
-                <button id="menuManageGroups" class="w-full text-left px-3 py-2 rounded-lg hover:bg-[var(--hh-accent-ice)] flex items-center gap-2">
+                <button id="menuManageGroups" class="w-full text-left px-3 py-2 rounded-lg hover:bg-(--hh-accent-ice) flex items-center gap-2">
 
                   <i data-lucide="users" class="w-4 h-4"></i>
 
@@ -1343,7 +1343,7 @@ async function checkSupabaseSession() {
 
                 </button>
 
-                <button id="menuPresetModes" class="w-full text-left px-3 py-2 rounded-lg hover:bg-[var(--hh-accent-ice)] flex items-center gap-2">
+                <button id="menuPresetModes" class="w-full text-left px-3 py-2 rounded-lg hover:bg-(--hh-accent-ice) flex items-center gap-2">
 
                   <i data-lucide="graduation-cap" class="w-4 h-4"></i>
 
@@ -1351,7 +1351,7 @@ async function checkSupabaseSession() {
 
                 </button>
 
-                <div class="border-t border-[var(--hh-card-border)] my-1"></div>
+                <div class="border-t border-(--hh-card-border) my-1"></div>
 
                 <button id="menuLogout" class="w-full text-left px-3 py-2 rounded-lg hover:bg-rose-50 text-rose-600 flex items-center gap-2">
 
@@ -1471,7 +1471,7 @@ async function checkSupabaseSession() {
 
           <div class="space-y-4">
 
-            <p class="text-xs text-[var(--hh-paragraph)] font-bold leading-relaxed">
+            <p class="text-xs text-(--hh-paragraph) font-bold leading-relaxed">
 
               ${isInitial
 
@@ -1495,7 +1495,7 @@ async function checkSupabaseSession() {
 
                 </div>
 
-                <p class="text-[10px] text-[var(--hh-paragraph)] opacity-80 leading-tight font-medium">國、英、數、物、理化、生、地科、歷、地、公民 (10科)</p>
+                <p class="text-[10px] text-(--hh-paragraph) opacity-80 leading-tight font-medium">國、英、數、物、理化、生、地科、歷、地、公民 (10科)</p>
 
               </label>
 
@@ -1511,7 +1511,7 @@ async function checkSupabaseSession() {
 
                 </div>
 
-                <p class="text-[10px] text-[var(--hh-paragraph)] opacity-80 leading-tight font-medium">國、英、數、物、化、生、地科、歷、地、公民 (10科)</p>
+                <p class="text-[10px] text-(--hh-paragraph) opacity-80 leading-tight font-medium">國、英、數、物、化、生、地科、歷、地、公民 (10科)</p>
 
               </label>
 
@@ -1527,7 +1527,7 @@ async function checkSupabaseSession() {
 
                 </div>
 
-                <p class="text-[10px] text-[var(--hh-paragraph)] opacity-80 leading-tight font-medium">國文、英文、數學、專一、專二 (5科)</p>
+                <p class="text-[10px] text-(--hh-paragraph) opacity-80 leading-tight font-medium">國文、英文、數學、專一、專二 (5科)</p>
 
               </label>
 
@@ -1543,7 +1543,7 @@ async function checkSupabaseSession() {
 
                 </div>
 
-                <p class="text-[10px] text-[var(--hh-paragraph)] opacity-80 leading-tight font-medium">預設空白，可自由手動新增專業科系科目</p>
+                <p class="text-[10px] text-(--hh-paragraph) opacity-80 leading-tight font-medium">預設空白，可自由手動新增專業科系科目</p>
 
               </label>
 
@@ -1553,7 +1553,7 @@ async function checkSupabaseSession() {
 
             ${!isInitial ? `
 
-            <div class="pt-2 border-t border-[var(--hh-card-border)] flex items-center justify-between">
+            <div class="pt-2 border-t border-(--hh-card-border) flex items-center justify-between">
 
               <label class="flex items-center gap-2 cursor-pointer text-xs font-bold text-rose-600 hover:opacity-80">
 
@@ -1767,7 +1767,7 @@ async function checkSupabaseSession() {
 
                 <input type="file" id="inputAvatarFile" accept="image/*" class="hidden">
 
-                <span id="avatarUploadStatus" class="text-xs text-[var(--hh-text-dim)] truncate max-w-[120px]"></span>
+                <span id="avatarUploadStatus" class="text-xs text-(--hh-text-dim) truncate max-w-[120px]"></span>
 
               </div>
 
@@ -1819,7 +1819,7 @@ async function checkSupabaseSession() {
 
                   statusEl.textContent = '上傳雲端中...';
 
-                  statusEl.className = 'text-xs text-[var(--hh-text-dim)] truncate max-w-[120px]';
+                  statusEl.className = 'text-xs text-(--hh-text-dim) truncate max-w-[120px]';
 
                 }
 
@@ -1933,7 +1933,7 @@ async function checkSupabaseSession() {
 
           statusEl.textContent = '處理中...';
 
-          statusEl.className = 'text-xs text-[var(--hh-text-dim)] truncate max-w-[120px]';
+          statusEl.className = 'text-xs text-(--hh-text-dim) truncate max-w-[120px]';
 
 
 
@@ -1995,7 +1995,7 @@ async function checkSupabaseSession() {
 
               statusEl.textContent = '載入成功';
 
-              statusEl.className = 'text-xs text-[var(--hh-accent-green)] font-bold truncate max-w-[120px]';
+              statusEl.className = 'text-xs text-(--hh-accent-green) font-bold truncate max-w-[120px]';
 
             };
 
@@ -2045,7 +2045,7 @@ async function checkSupabaseSession() {
 
               <div class="flex items-center gap-2">
 
-                <input type="text" id="inputGroupCode" value="${code}" readonly class="flex-1 px-3.5 py-2 text-sm font-mono font-black text-center hh-input bg-[var(--hh-accent-ice)]">
+                <input type="text" id="inputGroupCode" value="${code}" readonly class="flex-1 px-3.5 py-2 text-sm font-mono font-black text-center hh-input bg-(--hh-accent-ice)">
 
                 <button type="button" id="btnRefreshCode" class="hh-btn-secondary px-3 py-2 text-xs" title="重新產生號碼">
 
@@ -2055,7 +2055,7 @@ async function checkSupabaseSession() {
 
               </div>
 
-              <p class="text-[11px] font-semibold text-[var(--hh-paragraph)] opacity-75 mt-1">其他人需輸入此數字邀請碼發送申請，經您核准後即可加入群組。</p>
+              <p class="text-[11px] font-semibold text-(--hh-paragraph) opacity-75 mt-1">其他人需輸入此數字邀請碼發送申請，經您核准後即可加入群組。</p>
 
             </div>
 
@@ -2169,7 +2169,7 @@ async function checkSupabaseSession() {
 
             </div>
 
-            <p class="text-[11px] font-bold text-[var(--hh-paragraph)] opacity-75">
+            <p class="text-[11px] font-bold text-(--hh-paragraph) opacity-75">
 
               送出申請後需等待該群組管理員審核同意，同意後系統將自動為您解鎖該群組。
 
@@ -2296,7 +2296,7 @@ async function checkSupabaseSession() {
 
         contentHtml: `
 
-          <div class="text-sm text-[var(--hh-paragraph)] mb-3">
+          <div class="text-sm text-(--hh-paragraph) mb-3">
 
             您確定要刪除群組 <strong>${escapeHtml(groupName)}</strong> 嗎？<br>
 
@@ -2306,7 +2306,7 @@ async function checkSupabaseSession() {
 
           </div>
 
-          <input type="text" id="inputConfirmGroupName" class="w-full bg-[var(--hh-card)] border border-[var(--hh-card-border)] rounded-xl px-3 py-2 text-sm text-[var(--hh-headline)] placeholder-slate-400 focus:outline-none focus:border-[var(--hh-accent-teal)]" placeholder="請輸入 ${escapeHtml(groupName)}">
+          <input type="text" id="inputConfirmGroupName" class="w-full bg-(--hh-card) border border-(--hh-card-border) rounded-xl px-3 py-2 text-sm text-(--hh-headline) placeholder-slate-400 focus:outline-none focus:border-(--hh-accent-teal)" placeholder="請輸入 ${escapeHtml(groupName)}">
 
         `,
 
@@ -2339,7 +2339,7 @@ async function checkSupabaseSession() {
         title: '⚠️ 剔除成員確認',
         icon: 'alert-triangle',
         contentHtml: `
-          <div class="text-sm text-[var(--hh-paragraph)]">
+          <div class="text-sm text-(--hh-paragraph)">
             確定要將成員 <strong>${escapeHtml(nickname)}</strong> 踢除出群組 <strong>${escapeHtml(groupName)}</strong> 嗎？
           </div>
         `,
@@ -2367,7 +2367,7 @@ async function checkSupabaseSession() {
         title: '⚠️ 退出群組確認',
         icon: 'log-out',
         contentHtml: `
-          <div class="text-sm text-[var(--hh-paragraph)]">
+          <div class="text-sm text-(--hh-paragraph)">
             確定要退出群組 <strong>${escapeHtml(groupName)}</strong> 嗎？
           </div>
         `,
@@ -2444,17 +2444,17 @@ async function checkSupabaseSession() {
 
           return `
 
-            <div class="flex items-center justify-between p-2.5 rounded-xl border border-[var(--hh-card-border)] bg-[var(--hh-accent-ice)] mb-2">
+            <div class="flex items-center justify-between p-2.5 rounded-xl border border-(--hh-card-border) bg-(--hh-accent-ice) mb-2">
 
               <div class="flex items-center gap-2.5">
 
-                <img src="${escapeHtml(avatar)}" class="w-7 h-7 rounded-full object-cover border border-[var(--hh-card-border)]">
+                <img src="${escapeHtml(avatar)}" class="w-7 h-7 rounded-full object-cover border border-(--hh-card-border)">
 
                 <div>
 
-                  <div class="font-extrabold text-xs text-[var(--hh-headline)]">${escapeHtml(nick)}</div>
+                  <div class="font-extrabold text-xs text-(--hh-headline)">${escapeHtml(nick)}</div>
 
-                  <div class="text-[10px] font-semibold text-[var(--hh-paragraph)] opacity-75">申請加入：${escapeHtml(grpName)}</div>
+                  <div class="text-[10px] font-semibold text-(--hh-paragraph) opacity-75">申請加入：${escapeHtml(grpName)}</div>
 
                 </div>
 
@@ -2554,7 +2554,7 @@ async function checkSupabaseSession() {
 
           return `
 
-                  <div class="p-2.5 rounded-lg border border-[var(--hh-card-border)] bg-[var(--hh-card)]">
+                  <div class="p-2.5 rounded-lg border border-(--hh-card-border) bg-(--hh-card)">
 
                     <div class="flex items-center justify-between mb-2">
 
@@ -2562,7 +2562,7 @@ async function checkSupabaseSession() {
 
                       <div class="flex items-center gap-1.5">
 
-                        <span class="font-mono text-[10px] bg-[var(--hh-accent-ice)] px-2 py-0.5 rounded border">碼: ${g.invite_code}</span>
+                        <span class="font-mono text-[10px] bg-(--hh-accent-ice) px-2 py-0.5 rounded border">碼: ${g.invite_code}</span>
 
                         ${isOwner ? `<button class="btn-delete-group text-rose-500 hover:text-rose-600 transition p-1 rounded hover:bg-rose-500/10" data-id="${g.id}" data-name="${escapeHtml(g.name)}" title="刪除群組"><i data-lucide="trash-2" class="w-3.5 h-3.5"></i></button>` : ''}
 
@@ -2572,7 +2572,7 @@ async function checkSupabaseSession() {
 
                     </div>
 
-                    <div class="space-y-1.5 pl-1 border-l-2 border-[var(--hh-accent-teal)]">
+                    <div class="space-y-1.5 pl-1 border-l-2 border-(--hh-accent-teal)">
 
                       ${g.members.length > 0 ? g.members.map(m => `
 
@@ -2580,15 +2580,15 @@ async function checkSupabaseSession() {
 
                           <div class="flex items-center gap-2">
 
-                            <img src="${escapeHtml(m.profiles?.avatar_url || 'https://api.dicebear.com/7.x/bottts/svg?seed=user')}" class="w-5 h-5 rounded-full object-cover border border-[var(--hh-card-border)]">
+                            <img src="${escapeHtml(m.profiles?.avatar_url || 'https://api.dicebear.com/7.x/bottts/svg?seed=user')}" class="w-5 h-5 rounded-full object-cover border border-(--hh-card-border)">
 
-                            <span class="font-semibold ${m.role === 'owner' ? 'text-[var(--hh-btn-main)]' : 'text-[var(--hh-paragraph)]'}">
+                            <span class="font-semibold ${m.role === 'owner' ? 'text-(--hh-btn-main)' : 'text-(--hh-paragraph)'}">
 
                               ${escapeHtml(m.profiles?.nickname || '未知使用者')}
 
                             </span>
 
-                            ${m.role === 'owner' ? '<span class="text-[9px] bg-[var(--hh-badge-bg)] text-[var(--hh-badge-text)] px-1.5 py-0.5 rounded border border-[var(--hh-badge-text)]">建立者</span>' : ''}
+                            ${m.role === 'owner' ? '<span class="text-[9px] bg-(--hh-badge-bg) text-(--hh-badge-text) px-1.5 py-0.5 rounded border border-(--hh-badge-text)">建立者</span>' : ''}
 
                           </div>
 
@@ -2744,7 +2744,7 @@ async function checkSupabaseSession() {
 
 
 
-      let borderColors = 'bg-[var(--hh-btn-main)] text-[var(--hh-btn-text)] border-2 border-[var(--hh-card-border)]';
+      let borderColors = 'bg-(--hh-btn-main) text-(--hh-btn-text) border-2 border-(--hh-card-border)';
 
       let iconName = 'check-circle-2';
 
@@ -2752,7 +2752,7 @@ async function checkSupabaseSession() {
 
       if (type === 'info') {
 
-        borderColors = 'bg-[var(--hh-accent-blush)] text-[var(--hh-card-border)] border-2 border-[var(--hh-card-border)]';
+        borderColors = 'bg-(--hh-accent-blush) text-(--hh-card-border) border-2 border-(--hh-card-border)';
 
         iconName = 'info';
 
@@ -2913,7 +2913,7 @@ async function checkSupabaseSession() {
 
         <div class="space-y-4">
 
-          <div class="p-3 bg-[var(--hh-accent-ice)] rounded-xl border border-[var(--hh-card-border)] mb-4">
+          <div class="p-3 bg-(--hh-accent-ice) rounded-xl border border-(--hh-card-border) mb-4">
 
             <h4 class="font-bold text-xs mb-1">💡 智慧合併說明</h4>
 
@@ -2925,7 +2925,7 @@ async function checkSupabaseSession() {
 
           <div class="flex items-center justify-between mb-2">
 
-            <h4 class="font-bold text-sm text-[var(--hh-headline)]">選擇要匯入的個人科目</h4>
+            <h4 class="font-bold text-sm text-(--hh-headline)">選擇要匯入的個人科目</h4>
 
             <button id="btnImportSelectAll" class="text-xs font-bold text-blue-500 hover:underline">全選/取消全選</button>
 
@@ -2939,15 +2939,15 @@ async function checkSupabaseSession() {
 
         return `
 
-                <label class="flex items-center p-3 rounded-xl border border-[var(--hh-card-border)] bg-[var(--hh-card)] hover:bg-[var(--hh-bg-main)] cursor-pointer transition">
+                <label class="flex items-center p-3 rounded-xl border border-(--hh-card-border) bg-(--hh-card) hover:bg-(--hh-bg-main) cursor-pointer transition">
 
                   <input type="checkbox" value="${s.id}" class="import-subject-cb w-4 h-4 text-blue-600 rounded mr-3" checked>
 
                   <div class="flex-1">
 
-                    <div class="font-bold text-sm text-[var(--hh-headline)]">${escapeHtml(s.name)}</div>
+                    <div class="font-bold text-sm text-(--hh-headline)">${escapeHtml(s.name)}</div>
 
-                    <div class="text-[10px] text-[var(--hh-paragraph)] opacity-70">包含 ${rCount} 個單元範圍</div>
+                    <div class="text-[10px] text-(--hh-paragraph) opacity-70">包含 ${rCount} 個單元範圍</div>
 
                   </div>
 
@@ -3461,7 +3461,7 @@ async function checkSupabaseSession() {
 
         <div class="relative flex-1">
 
-          <select id="folderSelect" class="w-full hh-input px-2.5 py-1.5 text-xs font-bold rounded-lg cursor-pointer shadow-sm pr-7 bg-[var(--hh-accent-ice)] truncate">
+          <select id="folderSelect" class="w-full hh-input px-2.5 py-1.5 text-xs font-bold rounded-lg cursor-pointer shadow-sm pr-7 bg-(--hh-accent-ice) truncate">
 
             ${options}
 
@@ -3471,13 +3471,13 @@ async function checkSupabaseSession() {
 
         <div class="flex items-center gap-1 shrink-0">
 
-          <button onclick="promptCreateFolderModal()" class="hh-btn-secondary p-1.5 rounded-lg text-[var(--hh-headline)]" title="新增專案">
+          <button onclick="promptCreateFolderModal()" class="hh-btn-secondary p-1.5 rounded-lg text-(--hh-headline)" title="新增專案">
 
             <i data-lucide="plus" class="w-4 h-4"></i>
 
           </button>
 
-          <button onclick="promptEditFolderModal()" class="hh-btn-secondary p-1.5 rounded-lg text-[var(--hh-paragraph)]" title="編輯專案">
+          <button onclick="promptEditFolderModal()" class="hh-btn-secondary p-1.5 rounded-lg text-(--hh-paragraph)" title="編輯專案">
 
             <i data-lucide="edit-3" class="w-4 h-4"></i>
 
@@ -3537,7 +3537,7 @@ async function checkSupabaseSession() {
 
               <label class="block text-xs font-black hh-headline mb-1.5">預設學制模式 (決定初始科目)</label>
 
-              <select id="selectFolderMode" class="w-full hh-input px-3 py-2 text-xs font-bold bg-[var(--hh-accent-ice)] cursor-pointer">
+              <select id="selectFolderMode" class="w-full hh-input px-3 py-2 text-xs font-bold bg-(--hh-accent-ice) cursor-pointer">
 
                 <option value="junior">🎒 國中模式 (含10科)</option>
 
@@ -3853,7 +3853,7 @@ async function checkSupabaseSession() {
 
         container.innerHTML = `
 
-          <div class="text-center py-8 px-4 text-[var(--hh-paragraph)] opacity-80 flex flex-col items-center justify-center h-full">
+          <div class="text-center py-8 px-4 text-(--hh-paragraph) opacity-80 flex flex-col items-center justify-center h-full">
 
             <i data-lucide="folder-open" class="w-10 h-10 mx-auto mb-3 opacity-60"></i>
 
@@ -3892,7 +3892,7 @@ async function checkSupabaseSession() {
 
         container.innerHTML = `
 
-          <div class="text-center py-8 px-4 text-[var(--hh-paragraph)] opacity-60">
+          <div class="text-center py-8 px-4 text-(--hh-paragraph) opacity-60">
 
             <i data-lucide="book-open-check" class="w-8 h-8 mx-auto mb-2 opacity-50"></i>
 
@@ -3920,9 +3920,9 @@ async function checkSupabaseSession() {
 
         item.className = `group flex items-center justify-between p-3 rounded-xl cursor-pointer transition-all duration-150 border-2 ${isActive
 
-          ? 'hh-card-active font-black border-[var(--hh-card-border)]'
+          ? 'hh-card-active font-black border-(--hh-card-border)'
 
-          : 'bg-[var(--hh-card)] border-[var(--hh-card-border)] hover:border-[var(--hh-card-hover-border)]'
+          : 'bg-(--hh-card) border-(--hh-card-border) hover:border-(--hh-card-hover-border)'
 
           }`;
 
@@ -3948,7 +3948,7 @@ async function checkSupabaseSession() {
 
           <div class="flex items-center gap-2.5 overflow-hidden">
 
-            <i data-lucide="folder" class="w-4 h-4 text-[var(--hh-headline)] shrink-0"></i>
+            <i data-lucide="folder" class="w-4 h-4 text-(--hh-headline) shrink-0"></i>
 
             <span class="text-xs font-bold hh-headline truncate">${escapeHtml(sub.name)}</span>
 
@@ -3962,7 +3962,7 @@ async function checkSupabaseSession() {
 
             </span>
 
-            <button class="btn-edit-subject p-1.5 text-slate-400 hover:text-[var(--hh-btn-main)] rounded-lg hover:bg-[var(--hh-accent-ice)] border border-transparent hover:border-[var(--hh-card-border)] transition" title="編輯科目">
+            <button class="btn-edit-subject p-1.5 text-slate-400 hover:text-(--hh-btn-main) rounded-lg hover:bg-(--hh-accent-ice) border border-transparent hover:border-(--hh-card-border) transition" title="編輯科目">
 
               <i data-lucide="pencil" class="w-3.5 h-3.5"></i>
 
@@ -4030,7 +4030,7 @@ async function checkSupabaseSession() {
 
         container.innerHTML = `
 
-          <div class="text-center py-8 px-4 text-[var(--hh-paragraph)] opacity-60">
+          <div class="text-center py-8 px-4 text-(--hh-paragraph) opacity-60">
 
             <i data-lucide="arrow-left-circle" class="w-8 h-8 mx-auto mb-2 opacity-50"></i>
 
@@ -4054,7 +4054,7 @@ async function checkSupabaseSession() {
 
         container.innerHTML = `
 
-          <div class="text-center py-8 px-4 text-[var(--hh-paragraph)] opacity-60">
+          <div class="text-center py-8 px-4 text-(--hh-paragraph) opacity-60">
 
             <i data-lucide="bookmark-plus" class="w-8 h-8 mx-auto mb-2 opacity-50"></i>
 
@@ -4083,9 +4083,9 @@ async function checkSupabaseSession() {
 
         item.className = `group flex items-center justify-between p-3 rounded-xl cursor-pointer transition-all duration-150 border-2 ${isActive
 
-          ? 'hh-card-active font-black border-[var(--hh-card-border)]'
+          ? 'hh-card-active font-black border-(--hh-card-border)'
 
-          : 'bg-[var(--hh-card)] border-[var(--hh-card-border)] hover:border-[var(--hh-card-hover-border)]'
+          : 'bg-(--hh-card) border-(--hh-card-border) hover:border-(--hh-card-hover-border)'
 
           }`;
 
@@ -4117,7 +4117,7 @@ async function checkSupabaseSession() {
 
           <div class="flex items-center gap-2.5 overflow-hidden">
 
-            <i data-lucide="bookmark" class="w-4 h-4 text-[var(--hh-headline)] shrink-0"></i>
+            <i data-lucide="bookmark" class="w-4 h-4 text-(--hh-headline) shrink-0"></i>
 
             <span class="text-xs font-bold hh-headline truncate">${escapeHtml(rng.name)}</span>
 
@@ -4131,7 +4131,7 @@ async function checkSupabaseSession() {
 
             </span>
 
-            <button class="btn-edit-range p-1.5 text-slate-400 hover:text-[var(--hh-btn-main)] rounded-lg hover:bg-[var(--hh-accent-ice)] border border-transparent hover:border-[var(--hh-card-border)] transition" title="編輯範圍">
+            <button class="btn-edit-range p-1.5 text-slate-400 hover:text-(--hh-btn-main) rounded-lg hover:bg-(--hh-accent-ice) border border-transparent hover:border-(--hh-card-border) transition" title="編輯範圍">
 
               <i data-lucide="pencil" class="w-3.5 h-3.5"></i>
 
@@ -4217,9 +4217,9 @@ async function checkSupabaseSession() {
 
         container.innerHTML = `
 
-          <div class="h-64 flex flex-col items-center justify-center text-center p-6 text-[var(--hh-paragraph)] opacity-70">
+          <div class="h-64 flex flex-col items-center justify-center text-center p-6 text-(--hh-paragraph) opacity-70">
 
-            <div class="w-14 h-14 rounded-2xl bg-[var(--hh-accent-ice)] border-2 border-[var(--hh-card-border)] flex items-center justify-center mb-3">
+            <div class="w-14 h-14 rounded-2xl bg-(--hh-accent-ice) border-2 border-(--hh-card-border) flex items-center justify-center mb-3">
 
               <i data-lucide="mouse-pointer-click" class="w-7 h-7 hh-headline"></i>
 
@@ -4241,11 +4241,11 @@ async function checkSupabaseSession() {
 
       breadcrumb.innerHTML = `
 
-        <span class="font-extrabold text-[var(--hh-headline)]">${escapeHtml(activeSubject.name)}</span>
+        <span class="font-extrabold text-(--hh-headline)">${escapeHtml(activeSubject.name)}</span>
 
         <i data-lucide="chevron-right" class="w-3.5 h-3.5"></i>
 
-        <span class="font-bold text-[var(--hh-paragraph)]">${escapeHtml(activeRange.name)}</span>
+        <span class="font-bold text-(--hh-paragraph)">${escapeHtml(activeRange.name)}</span>
 
       `;
 
@@ -4268,7 +4268,7 @@ async function checkSupabaseSession() {
 
         container.innerHTML = `
 
-          <div class="h-48 flex flex-col items-center justify-center text-center p-6 rounded-xl border-2 border-dashed border-[var(--hh-card-border)] bg-[var(--hh-card)] text-[var(--hh-paragraph)] opacity-80">
+          <div class="h-48 flex flex-col items-center justify-center text-center p-6 rounded-xl border-2 border-dashed border-(--hh-card-border) bg-(--hh-card) text-(--hh-paragraph) opacity-80">
 
             <i data-lucide="external-link" class="w-7 h-7 mb-2 opacity-50"></i>
 
@@ -4300,7 +4300,7 @@ async function checkSupabaseSession() {
 
           <div class="flex items-start gap-3 overflow-hidden">
 
-            <div class="w-10 h-10 rounded-xl bg-[var(--hh-accent-ice)] border-2 border-[var(--hh-card-border)] flex items-center justify-center text-[var(--hh-headline)] shrink-0 mt-0.5 sm:mt-0 shadow-xs">
+            <div class="w-10 h-10 rounded-xl bg-(--hh-accent-ice) border-2 border-(--hh-card-border) flex items-center justify-center text-(--hh-headline) shrink-0 mt-0.5 sm:mt-0 shadow-xs">
 
               <i data-lucide="globe" class="w-5 h-5"></i>
 
@@ -4314,7 +4314,7 @@ async function checkSupabaseSession() {
 
               </h5>
 
-              <a href="${safeUrl}" target="_blank" rel="noopener noreferrer" class="text-xs font-bold text-[var(--hh-paragraph)] opacity-80 hover:opacity-100 transition-opacity truncate block flex items-center gap-1 mt-0.5">
+              <a href="${safeUrl}" target="_blank" rel="noopener noreferrer" class="text-xs font-bold text-(--hh-paragraph) opacity-80 hover:opacity-100 transition-opacity truncate block flex items-center gap-1 mt-0.5">
 
                 <span class="truncate">${safeUrl}</span>
 
@@ -4324,9 +4324,9 @@ async function checkSupabaseSession() {
 
               ${(lnk.editor || lnk.creator) ? `
 
-              <div class="flex items-center gap-1.5 mt-1.5 pt-1.5 border-t border-[var(--hh-card-border)]/10 text-[10px] font-bold text-[var(--hh-paragraph)] opacity-70">
+              <div class="flex items-center gap-1.5 mt-1.5 pt-1.5 border-t border-(--hh-card-border)/10 text-[10px] font-bold text-(--hh-paragraph) opacity-70">
 
-                <img src="${escapeHtml((lnk.editor || lnk.creator).avatar_url || 'https://api.dicebear.com/7.x/notionists/svg?seed=' + (lnk.editor || lnk.creator).nickname)}" class="w-4 h-4 rounded-full border border-[var(--hh-card-border)] object-cover bg-white">
+                <img src="${escapeHtml((lnk.editor || lnk.creator).avatar_url || 'https://api.dicebear.com/7.x/notionists/svg?seed=' + (lnk.editor || lnk.creator).nickname)}" class="w-4 h-4 rounded-full border border-(--hh-card-border) object-cover bg-white">
 
                 <span>最後編輯: ${escapeHtml((lnk.editor || lnk.creator).nickname)}</span>
 
@@ -4340,7 +4340,7 @@ async function checkSupabaseSession() {
 
 
 
-          <div class="flex items-center gap-2 shrink-0 self-end sm:self-center pt-2 sm:pt-0 border-t-2 sm:border-t-0 border-[var(--hh-card-border)]/20 w-full sm:w-auto justify-end">
+          <div class="flex items-center gap-2 shrink-0 self-end sm:self-center pt-2 sm:pt-0 border-t-2 sm:border-t-0 border-(--hh-card-border)/20 w-full sm:w-auto justify-end">
 
             <a href="${safeUrl}" target="_blank" rel="noopener noreferrer" class="hh-btn-primary px-3 py-1.5 text-xs flex items-center gap-1">
 
@@ -5294,15 +5294,15 @@ async function checkSupabaseSession() {
 
 
 
-        navBtn.classList.add('bg-[var(--hh-btn-main)]', 'text-[var(--hh-btn-text)]', 'shadow-sm');
+        navBtn.classList.add('bg-(--hh-btn-main)', 'text-(--hh-btn-text)', 'shadow-sm');
 
-        navBtn.classList.remove('text-[var(--hh-paragraph)]');
+        navBtn.classList.remove('text-(--hh-paragraph)');
 
 
 
-        linksBtn.classList.remove('bg-[var(--hh-btn-main)]', 'text-[var(--hh-btn-text)]', 'shadow-sm');
+        linksBtn.classList.remove('bg-(--hh-btn-main)', 'text-(--hh-btn-text)', 'shadow-sm');
 
-        linksBtn.classList.add('text-[var(--hh-paragraph)]');
+        linksBtn.classList.add('text-(--hh-paragraph)');
 
       } else {
 
@@ -5312,15 +5312,15 @@ async function checkSupabaseSession() {
 
 
 
-        linksBtn.classList.add('bg-[var(--hh-btn-main)]', 'text-[var(--hh-btn-text)]', 'shadow-sm');
+        linksBtn.classList.add('bg-(--hh-btn-main)', 'text-(--hh-btn-text)', 'shadow-sm');
 
-        linksBtn.classList.remove('text-[var(--hh-paragraph)]');
+        linksBtn.classList.remove('text-(--hh-paragraph)');
 
 
 
-        navBtn.classList.remove('bg-[var(--hh-btn-main)]', 'text-[var(--hh-btn-text)]', 'shadow-sm');
+        navBtn.classList.remove('bg-(--hh-btn-main)', 'text-(--hh-btn-text)', 'shadow-sm');
 
-        navBtn.classList.add('text-[var(--hh-paragraph)]');
+        navBtn.classList.add('text-(--hh-paragraph)');
 
       }
 
@@ -5600,7 +5600,7 @@ async function checkSupabaseSession() {
 
         container.innerHTML = `
 
-          <div class="text-center py-10 px-4 text-[var(--hh-paragraph)] opacity-60">
+          <div class="text-center py-10 px-4 text-(--hh-paragraph) opacity-60">
 
             <i data-lucide="search-x" class="w-8 h-8 mx-auto mb-2 opacity-50"></i>
 
@@ -5646,9 +5646,9 @@ async function checkSupabaseSession() {
 
         item.className = `search-result-item flex items-center justify-between p-3 rounded-xl cursor-pointer transition-all duration-150 border-2 ${isSelected
 
-          ? 'hh-card-active border-[var(--hh-card-border)] ring-2 ring-[var(--hh-btn-main)]'
+          ? 'hh-card-active border-(--hh-card-border) ring-2 ring-(--hh-btn-main)'
 
-          : 'bg-[var(--hh-card)] border-[var(--hh-card-border)] hover:border-[var(--hh-card-hover-border)]'
+          : 'bg-(--hh-card) border-(--hh-card-border) hover:border-(--hh-card-hover-border)'
 
           }`;
 
@@ -5660,9 +5660,9 @@ async function checkSupabaseSession() {
 
           <div class="flex items-center gap-3 overflow-hidden">
 
-            <div class="w-9 h-9 rounded-xl bg-[var(--hh-accent-ice)] border-2 border-[var(--hh-card-border)] flex items-center justify-center shrink-0">
+            <div class="w-9 h-9 rounded-xl bg-(--hh-accent-ice) border-2 border-(--hh-card-border) flex items-center justify-center shrink-0">
 
-              <i data-lucide="${res.icon}" class="w-4 h-4 text-[var(--hh-headline)]"></i>
+              <i data-lucide="${res.icon}" class="w-4 h-4 text-(--hh-headline)"></i>
 
             </div>
 
@@ -5670,7 +5670,7 @@ async function checkSupabaseSession() {
 
               <h5 class="text-xs font-black hh-headline truncate">${escapeHtml(res.title)}</h5>
 
-              <p class="text-[11px] font-semibold text-[var(--hh-paragraph)] opacity-80 truncate">${escapeHtml(res.subtitle)}</p>
+              <p class="text-[11px] font-semibold text-(--hh-paragraph) opacity-80 truncate">${escapeHtml(res.subtitle)}</p>
 
             </div>
 
@@ -5680,7 +5680,7 @@ async function checkSupabaseSession() {
 
             ${typeBadge}
 
-            <i data-lucide="corner-down-left" class="w-4 h-4 text-[var(--hh-paragraph)] opacity-50"></i>
+            <i data-lucide="corner-down-left" class="w-4 h-4 text-(--hh-paragraph) opacity-50"></i>
 
           </div>
 
@@ -5720,17 +5720,17 @@ async function checkSupabaseSession() {
 
         if (idx === selectedResultIndex) {
 
-          el.classList.add('hh-card-active', 'ring-2', 'ring-[var(--hh-btn-main)]');
+          el.classList.add('hh-card-active', 'ring-2', 'ring-(--hh-btn-main)');
 
-          el.classList.remove('bg-[var(--hh-card)]');
+          el.classList.remove('bg-(--hh-card)');
 
           el.scrollIntoView({ block: 'nearest' });
 
         } else {
 
-          el.classList.remove('hh-card-active', 'ring-2', 'ring-[var(--hh-btn-main)]');
+          el.classList.remove('hh-card-active', 'ring-2', 'ring-(--hh-btn-main)');
 
-          el.classList.add('bg-[var(--hh-card)]');
+          el.classList.add('bg-(--hh-card)');
 
         }
 

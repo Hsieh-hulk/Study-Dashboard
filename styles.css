@@ -1,8 +1,7 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import 'tailwindcss';
+@config "./tailwind.config.js";
 
-    /* --- HAPPY HUES & STUDY FOCUS DESIGN SYSTEM THEMES --- */
+/* --- HAPPY HUES & STUDY FOCUS DESIGN SYSTEM THEMES --- */
 
 
 
