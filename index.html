@@ -897,21 +897,6 @@
             <!-- JS Rendered Folder Dropdown -->
           </div>
 
-          <!-- Subject Sort Bar -->
-          <div class="mb-3 flex items-center justify-end gap-1.5">
-            <select id="subjectsSortSelect" class="text-[11px] bg-[var(--hh-card)] border border-[var(--hh-card-border)] rounded-md px-1.5 py-1 outline-none font-bold text-[var(--hh-paragraph)] transition" onchange="sortSettings.subjects.mode = this.value; saveSortSettings(); renderSubjects();">
-              <option value="updatedAt">最後修改</option>
-              <option value="name">筆畫名稱</option>
-              <option value="createdAt">建立時間</option>
-              <option value="default">預設排序</option>
-            </select>
-            <button id="btnSubjectsSortDir" class="p-1 rounded-md border border-[var(--hh-card-border)] bg-[var(--hh-card)] hover:bg-[var(--hh-accent-ice)] flex items-center justify-center transition" onclick="toggleSortDir('subjects')" title="切換排序方向">
-              <i data-lucide="arrow-down" class="w-3.5 h-3.5"></i>
-            </button>
-          </div>
-
-
-
           <!-- Subject List Container -->
 
           <div id="subjectList" class="flex-1 overflow-y-auto space-y-2.5 pr-1 max-h-[calc(100vh-280px)] min-h-[160px]">
@@ -948,21 +933,6 @@
 
             </button>
 
-          </div>
-
-
-
-          <!-- Range Sort Bar -->
-          <div class="mb-3 flex items-center justify-end gap-1.5">
-            <select id="rangesSortSelect" class="text-[11px] bg-[var(--hh-card)] border border-[var(--hh-card-border)] rounded-md px-1.5 py-1 outline-none font-bold text-[var(--hh-paragraph)] transition" onchange="sortSettings.ranges.mode = this.value; saveSortSettings(); renderRanges();">
-              <option value="updatedAt">最後修改</option>
-              <option value="name">筆畫名稱</option>
-              <option value="createdAt">建立時間</option>
-              <option value="default">預設排序</option>
-            </select>
-            <button id="btnRangesSortDir" class="p-1 rounded-md border border-[var(--hh-card-border)] bg-[var(--hh-card)] hover:bg-[var(--hh-accent-ice)] flex items-center justify-center transition" onclick="toggleSortDir('ranges')" title="切換排序方向">
-              <i data-lucide="arrow-down" class="w-3.5 h-3.5"></i>
-            </button>
           </div>
 
           <!-- Range List Container -->
@@ -1019,21 +989,6 @@
 
           </span>
 
-        </div>
-
-
-
-        <!-- Link Sort Bar -->
-        <div class="mb-4 flex items-center justify-end gap-1.5">
-          <select id="linksSortSelect" class="text-xs bg-[var(--hh-card)] border-2 border-[var(--hh-card-border)] rounded-md px-2 py-1 outline-none font-bold text-[var(--hh-paragraph)] transition" onchange="sortSettings.links.mode = this.value; saveSortSettings(); renderLinks();">
-            <option value="updatedAt">最後修改</option>
-            <option value="name">筆畫名稱</option>
-            <option value="createdAt">建立時間</option>
-            <option value="default">預設排序</option>
-          </select>
-          <button id="btnLinksSortDir" class="p-1.5 rounded-md border-2 border-[var(--hh-card-border)] bg-[var(--hh-card)] hover:bg-[var(--hh-accent-ice)] flex items-center justify-center transition" onclick="toggleSortDir('links')" title="切換排序方向">
-            <i data-lucide="arrow-down" class="w-4 h-4"></i>
-          </button>
         </div>
 
         <!-- Create Link Form (Hidden initially) -->
@@ -1262,77 +1217,15 @@
 
     const STORAGE_KEY = 'study_agent_db_v5';
 
-    const SORT_SETTINGS_KEY = 'study_dashboard_sort_settings';
-    let sortSettings = {
-      subjects: { mode: 'updatedAt', dir: 'desc' },
-      ranges: { mode: 'updatedAt', dir: 'desc' },
-      links: { mode: 'updatedAt', dir: 'desc' }
-    };
-
-    function loadSortSettings() {
-      try {
-        const raw = localStorage.getItem(SORT_SETTINGS_KEY);
-        if (raw) {
-          sortSettings = { ...sortSettings, ...JSON.parse(raw) };
-        }
-      } catch (e) {
-        console.error('Failed to load sort settings', e);
-      }
-      updateSortUI();
-    }
-
-    function saveSortSettings() {
-      localStorage.setItem(SORT_SETTINGS_KEY, JSON.stringify(sortSettings));
-    }
-
     function sortItems(items, type) {
-      const config = sortSettings[type];
-      if (!config || config.mode === 'default' || !Array.isArray(items)) return items.slice();
-      
+      if (!Array.isArray(items)) return items ? items.slice() : [];
       return [...items].sort((a, b) => {
-        let valA, valB;
-        if (config.mode === 'name') {
-          valA = a.name || a.title || '';
-          valB = b.name || b.title || '';
-          let res = valA.localeCompare(valB, 'zh-Hant-TW', { numeric: true });
-          return config.dir === 'asc' ? res : -res;
-        }
-        
-        if (config.mode === 'updatedAt') {
-          valA = a.last_edited_at || a.updated_at || a.updatedAt || a.created_at || a.createdAt || '';
-          valB = b.last_edited_at || b.updated_at || b.updatedAt || b.created_at || b.createdAt || '';
-        } else if (config.mode === 'createdAt') {
-          valA = a.created_at || a.createdAt || '';
-          valB = b.created_at || b.createdAt || '';
-        }
-        
+        const valA = a.created_at || a.createdAt || '';
+        const valB = b.created_at || b.createdAt || '';
         const timeA = valA ? new Date(valA).getTime() : 0;
         const timeB = valB ? new Date(valB).getTime() : 0;
-        return config.dir === 'asc' ? timeA - timeB : timeB - timeA;
+        return timeA - timeB; // ascending
       });
-    }
-
-    function toggleSortDir(type) {
-      sortSettings[type].dir = sortSettings[type].dir === 'asc' ? 'desc' : 'asc';
-      saveSortSettings();
-      updateSortUI();
-      if (type === 'subjects') renderSubjects();
-      else if (type === 'ranges') renderRanges();
-      else if (type === 'links') renderLinks();
-    }
-
-    function updateSortUI() {
-      ['subjects', 'ranges', 'links'].forEach(type => {
-        const select = document.getElementById(type + 'SortSelect');
-        const btn = document.getElementById('btn' + type.charAt(0).toUpperCase() + type.slice(1) + 'SortDir');
-        if (select && btn) {
-          select.value = sortSettings[type].mode;
-          btn.innerHTML = sortSettings[type].dir === 'asc' ? '<i data-lucide="arrow-up" class="w-3.5 h-3.5"></i>' : '<i data-lucide="arrow-down" class="w-3.5 h-3.5"></i>';
-        }
-      });
-      if (window.lucide) {
-        lucide.createIcons();
-      }
     }
 
     const THEME_KEY = 'happyhues_theme_setting';
@@ -2353,8 +2246,6 @@ async function checkSupabaseSession() {
         setTheme(savedTheme);
         document.getElementById('themeSelector').value = savedTheme;
       }
-      
-      loadSortSettings();
     }
 
 
@@ -4227,7 +4118,9 @@ async function checkSupabaseSession() {
 
         .select('*')
 
-        .in('subject_id', subIds);
+        .in('subject_id', subIds)
+        
+        .order('created_at', { ascending: true });
 
 
 
@@ -4239,7 +4132,9 @@ async function checkSupabaseSession() {
 
         .select('*')
 
-        .in('range_id', rangeIds.length > 0 ? rangeIds : ['00000000-0000-0000-0000-000000000000']); // Fallback to avoid empty array error
+        .in('range_id', rangeIds.length > 0 ? rangeIds : ['00000000-0000-0000-0000-000000000000']) // Fallback to avoid empty array error
+        
+        .order('created_at', { ascending: true });
 
 
 
