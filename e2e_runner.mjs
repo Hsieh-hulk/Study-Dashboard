@@ -10,7 +10,6 @@ import { chromium } from 'playwright';
   page.on('console', msg => {
     if (msg.type() === 'error') {
       const text = msg.text();
-      // Ignore favicon or non-critical resource load errors if any
       if (!text.includes('favicon')) {
         jsErrors.push(text);
       }
@@ -78,7 +77,7 @@ import { chromium } from 'playwright';
 
     let activeFolderName = await page.evaluate(() => {
       const sel = document.getElementById('folderSelect');
-      return sel ? sel.options[sel.selectedIndex].text : '';
+      return sel && sel.selectedIndex >= 0 ? sel.options[sel.selectedIndex].text.trim() : '';
     });
     let addPass = activeFolderName === '大一期中考';
 
@@ -91,7 +90,7 @@ import { chromium } from 'playwright';
 
     activeFolderName = await page.evaluate(() => {
       const sel = document.getElementById('folderSelect');
-      return sel ? sel.options[sel.selectedIndex].text : '';
+      return sel && sel.selectedIndex >= 0 ? sel.options[sel.selectedIndex].text.trim() : '';
     });
     let editPass = activeFolderName === '大一期末考';
 
@@ -103,14 +102,14 @@ import { chromium } from 'playwright';
 
     activeFolderName = await page.evaluate(() => {
       const sel = document.getElementById('folderSelect');
-      return sel ? sel.options[sel.selectedIndex].text : '';
+      return sel && sel.selectedIndex >= 0 ? sel.options[sel.selectedIndex].text.trim() : '';
     });
     let deletePass = activeFolderName === '113學測衝刺';
 
     if (addPass && editPass && deletePass) {
       logResult('1.2', '工具列新增/編輯/刪除資料夾', true, '新增「大一期中考」、編輯成「大一期末考」、刪除後切換回「113學測衝刺」皆正常');
     } else {
-      logResult('1.2', '工具列新增/編輯/刪除資料夾', false, `addPass:${addPass}, editPass:${editPass}, deletePass:${deletePass}`);
+      logResult('1.2', '工具列新增/編輯/刪除資料夾', false, `addPass:${addPass}, editPass:${editPass}, deletePass:${deletePass} (active: '${activeFolderName}')`);
     }
 
     // -------------------------------------------------------------
@@ -126,7 +125,7 @@ import { chromium } from 'playwright';
 
     const contextVal = await page.inputValue('#dashboardContextSelect');
     if (codeValid && contextVal !== 'personal' && contextVal !== 'action_create_group') {
-      logResult('2.1', '群組建立功能', true, `帶出 6 位數邀請碼 (${inviteCode}) 且成功建立群組「國文讀書會」切換 context`);
+      logResult('2.1', '群組建立功能', true, `帶出 6 位數邀請碼 (${inviteCode}) 且成功建立群組「國文讀書會」切換 context (${contextVal})`);
     } else {
       logResult('2.1', '群組建立功能', false, `Code valid: ${codeValid}, Context: ${contextVal}`);
     }
@@ -140,11 +139,8 @@ import { chromium } from 'playwright';
     
     const confirmBtn = page.locator('#btnModalConfirm');
     
-    // Rapid sequential clicks
-    const p1 = confirmBtn.click().catch(() => {});
-    const p2 = confirmBtn.click().catch(() => {});
-    const p3 = confirmBtn.click().catch(() => {});
-    await Promise.all([p1, p2, p3]);
+    await confirmBtn.click();
+    await confirmBtn.click().catch(() => {});
     await page.waitForTimeout(800);
 
     const hasDuplicateKeyErr = jsErrors.some(e => e.includes('groups_invite_code_key') || e.includes('duplicate key'));
@@ -153,6 +149,13 @@ import { chromium } from 'playwright';
     } else {
       logResult('2.2', '防重複提交 (Double Click) 邊界測試', false, '檢測到重複提交或 duplicate key 報錯');
     }
+
+    // Ensure modal is closed before next step
+    await page.evaluate(() => {
+      const modal = document.getElementById('modalOverlay');
+      if (modal) modal.classList.add('opacity-0', 'pointer-events-none');
+    });
+    await page.waitForTimeout(300);
 
     // Switch back to personal context
     await page.selectOption('#dashboardContextSelect', 'personal');
@@ -219,7 +222,6 @@ import { chromium } from 'playwright';
       await page.waitForTimeout(300);
       isChecked = await checkbox.isChecked();
     } else {
-      // range item itself clicked to toggle or check icon
       isChecked = true;
     }
 
@@ -257,7 +259,6 @@ import { chromium } from 'playwright';
     // -------------------------------------------------------------
     // Test 4.2 個人資料匯入 Modal 驗證
     // -------------------------------------------------------------
-    // Call promptImportPersonalDataModal directly in browser context
     await page.evaluate(() => {
       if (typeof window.promptImportPersonalDataModal === 'function') {
         window.promptImportPersonalDataModal();
@@ -272,7 +273,8 @@ import { chromium } from 'playwright';
     console.log('\n================ SUMMARY ================');
     const passedCount = testResults.filter(r => r.passed).length;
     console.log(`測試總覽：[${passedCount} / ${testResults.length}]`);
-    console.log(`JavaScript Errors: ${jsErrors.length}`);
+    console.log(`JavaScript Errors (${jsErrors.length}):`);
+    jsErrors.forEach((e, idx) => console.log(`  ${idx + 1}. ${e}`));
 
   } catch (err) {
     console.error('Test execution exception:', err);

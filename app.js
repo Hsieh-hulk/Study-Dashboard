@@ -372,6 +372,11 @@ async function checkSupabaseSession() {
         if (linksContainer) linksContainer.innerHTML = skeletonHtml;
       }
 
+      if (!supabaseClient || !globalStore.state.currentUser) {
+        renderAll();
+        return;
+      }
+
       showSkeletonLoading();
 
       try {
