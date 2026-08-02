@@ -1224,7 +1224,7 @@
         const valB = b.created_at || b.createdAt || '';
         const timeA = valA ? new Date(valA).getTime() : 0;
         const timeB = valB ? new Date(valB).getTime() : 0;
-        return timeB - timeA; // descending (newest on top)
+        return timeA - timeB; // ascending
       });
     }
 
@@ -1606,13 +1606,17 @@ async function checkSupabaseSession() {
 
             preset_mode: sub.preset_mode,
 
+            created_at: sub.created_at,
+
             ranges: (sub.ranges || []).map(rng => ({
 
-              id: rng.id, name: rng.name, subject_id: rng.subject_id,
+              id: rng.id, name: rng.name, subject_id: rng.subject_id, created_at: rng.created_at,
 
               links: (rng.resource_links || []).map(lnk => ({
 
                 id: lnk.id, title: lnk.title, url: lnk.url, range_id: lnk.range_id, created_by: lnk.created_by,
+
+                created_at: lnk.created_at,
 
                 last_edited_by: lnk.last_edited_by, last_edited_at: lnk.last_edited_at, editor: lnk.editor || null, creator: lnk.creator || null
 
@@ -1676,13 +1680,17 @@ async function checkSupabaseSession() {
 
               id: sub.id, name: sub.name, user_id: sub.user_id, group_id: sub.group_id, preset_mode: sub.preset_mode,
 
+              created_at: sub.created_at,
+
               ranges: (sub.ranges || []).map(rng => ({
 
-                id: rng.id, name: rng.name, subject_id: rng.subject_id,
+                id: rng.id, name: rng.name, subject_id: rng.subject_id, created_at: rng.created_at,
 
                 links: (rng.resource_links || []).map(lnk => ({
 
                   id: lnk.id, title: lnk.title, url: lnk.url, range_id: lnk.range_id, created_by: lnk.created_by,
+
+                  created_at: lnk.created_at,
 
                   last_edited_by: lnk.last_edited_by, last_edited_at: lnk.last_edited_at, editor: lnk.editor || null, creator: lnk.creator || null
 
@@ -4096,11 +4104,10 @@ async function checkSupabaseSession() {
         .select('*')
         .eq('user_id', currentUser.id)
         .is('group_id', null)
-        .order('created_at', { ascending: false });
+        .order('created_at', { ascending: true });
 
       // 過濾掉內部使用的 ___FOLDER_META___ 特殊紀錄
-      let pSubjects = (rawSubjects || []).filter(s => s.name !== '___FOLDER_META___');
-      pSubjects = sortItems(pSubjects, 'subjects');
+      const pSubjects = (rawSubjects || []).filter(s => s.name !== '___FOLDER_META___');
 
       if (subErr || !pSubjects || pSubjects.length === 0) {
         Swal.fire('無資料', '您的個人雲端目前沒有任何科目可以匯入。', 'info');
@@ -4121,7 +4128,7 @@ async function checkSupabaseSession() {
 
         .in('subject_id', subIds)
         
-        .order('created_at', { ascending: false });
+        .order('created_at', { ascending: true });
 
 
 
@@ -4135,7 +4142,7 @@ async function checkSupabaseSession() {
 
         .in('range_id', rangeIds.length > 0 ? rangeIds : ['00000000-0000-0000-0000-000000000000']) // Fallback to avoid empty array error
         
-        .order('created_at', { ascending: false });
+        .order('created_at', { ascending: true });
 
 
 
@@ -4252,6 +4259,8 @@ async function checkSupabaseSession() {
             let importedRangesCount = 0;
 
             let importedLinksCount = 0;
+            
+            let baseTime = Date.now();
 
 
 
@@ -4295,7 +4304,7 @@ async function checkSupabaseSession() {
 
               if (!targetSub) {
 
-                const insertSubObj = {
+                const { data: newSub, error: insSubErr } = await supabaseClient.from('subjects').insert({
 
                   name: pSub.name,
 
@@ -4303,13 +4312,11 @@ async function checkSupabaseSession() {
 
                   group_id: currentGroupId,
 
-                  preset_mode: targetFolderId
+                  preset_mode: targetFolderId,
 
-                };
+                  created_at: new Date(baseTime++).toISOString()
 
-                if (pSub.created_at) insertSubObj.created_at = pSub.created_at;
-
-                const { data: newSub, error: insSubErr } = await supabaseClient.from('subjects').insert(insertSubObj).select().single();
+                }).select().single();
 
                 if (insSubErr) throw insSubErr;
 
@@ -4333,17 +4340,15 @@ async function checkSupabaseSession() {
 
                 if (!targetRange) {
 
-                  const insertRngObj = {
+                  const { data: newRange, error: insRngErr } = await supabaseClient.from('ranges').insert({
 
                     subject_id: targetSub.id,
 
-                    name: pRange.name
+                    name: pRange.name,
+                    
+                    created_at: new Date(baseTime++).toISOString()
 
-                  };
-
-                  if (pRange.created_at) insertRngObj.created_at = pRange.created_at;
-
-                  const { data: newRange, error: insRngErr } = await supabaseClient.from('ranges').insert(insertRngObj).select().single();
+                  }).select().single();
 
                   if (insRngErr) throw insRngErr;
 
@@ -4367,7 +4372,7 @@ async function checkSupabaseSession() {
 
                   if (!groupLinksSet.has(linkKey)) {
 
-                    const insertLnkObj = {
+                    const { error: insLnkErr } = await supabaseClient.from('resource_links').insert({
 
                       range_id: targetRange.id,
 
@@ -4377,13 +4382,11 @@ async function checkSupabaseSession() {
 
                       created_by: currentUser.id,
 
-                      last_edited_by: currentUser.id
+                      last_edited_by: currentUser.id,
+                      
+                      created_at: new Date(baseTime++).toISOString()
 
-                    };
-
-                    if (pLink.created_at) insertLnkObj.created_at = pLink.created_at;
-
-                    const { error: insLnkErr } = await supabaseClient.from('resource_links').insert(insertLnkObj);
+                    });
 
                     if (insLnkErr) throw insLnkErr;
 
