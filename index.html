@@ -4326,6 +4326,16 @@ async function checkSupabaseSession() {
 
                 importedSubsCount++;
 
+              } else {
+              
+                const newTime = new Date(baseTime++).toISOString();
+                
+                const { error: updErr } = await supabaseClient.from('subjects').update({ created_at: newTime }).eq('id', targetSub.id);
+                
+                if (updErr) throw updErr;
+                
+                targetSub.created_at = newTime;
+                
               }
 
 
@@ -4358,6 +4368,16 @@ async function checkSupabaseSession() {
 
                   importedRangesCount++;
 
+                } else {
+                
+                  const newTime = new Date(baseTime++).toISOString();
+                  
+                  const { error: updErr } = await supabaseClient.from('ranges').update({ created_at: newTime }).eq('id', targetRange.id);
+                  
+                  if (updErr) throw updErr;
+                  
+                  targetRange.created_at = newTime;
+                  
                 }
 
 
@@ -4394,6 +4414,14 @@ async function checkSupabaseSession() {
 
                     importedLinksCount++;
 
+                  } else {
+                  
+                    const newTime = new Date(baseTime++).toISOString();
+                    
+                    const { error: updErr } = await supabaseClient.from('resource_links').update({ created_at: newTime }).eq('range_id', targetRange.id).eq('url', pLink.url).eq('title', pLink.title);
+                    
+                    if (updErr) throw updErr;
+                    
                   }
 
                 }
