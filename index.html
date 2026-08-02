@@ -3366,38 +3366,22 @@ async function checkSupabaseSession() {
             });
 
             myGroups.push(data);
-
-            currentDashboardContext = data.id;
-
+            closeModal();
+            showToast(`成功建立群組「${name}」 (邀請碼: ${invite_code})`, 'success');
+            await switchDashboardContext(data.id);
           } else {
-
             const newGroup = {
-
               id: generateId('grp'),
-
               name,
-
               invite_code,
-
               owner_id: 'local_owner',
-
               created_at: new Date().toISOString()
-
             };
-
             myGroups.push(newGroup);
-
-            currentDashboardContext = newGroup.id;
-
+            closeModal();
+            showToast(`成功建立群組「${name}」 (邀請碼: ${invite_code})`, 'success');
+            await switchDashboardContext(newGroup.id);
           }
-
-
-
-          renderDashboardContextOptions();
-
-          closeModal();
-
-          showToast(`成功建立群組「${name}」 (邀請碼: ${invite_code})`, 'success');
 
         }
 
@@ -3478,13 +3462,10 @@ async function checkSupabaseSession() {
             const isMember = myGroups.some(g => g.id === grp.id);
 
             if (isMember) {
-
-              showToast(`您已經是群組「${grp.name}」的成員了！`, 'info');
-
               closeModal();
-
+              showToast(`您已經是群組「${grp.name}」的成員了！`, 'info');
+              await switchDashboardContext(grp.id);
               return;
-
             }
 
 
@@ -3526,11 +3507,17 @@ async function checkSupabaseSession() {
             showToast(`已向群組「${grp.name}」送出加入申請，等待管理員審核！`, 'success');
 
           } else {
-
+            const mockGrp = {
+              id: generateId('mockgrp'),
+              name: `模擬群組 ${code}`,
+              invite_code: code,
+              owner_id: 'mock_owner',
+              created_at: new Date().toISOString()
+            };
+            myGroups.push(mockGrp);
             closeModal();
-
-            showToast(`已模擬發送「${code}」加入申請，等候審核中！`, 'info');
-
+            showToast(`已模擬加入群組「${mockGrp.name}」！`, 'success');
+            await switchDashboardContext(mockGrp.id);
           }
 
         }
@@ -3576,205 +3563,107 @@ async function checkSupabaseSession() {
         confirmText: '確定刪除',
 
         onConfirm: async () => {
-
           const inputVal = document.getElementById('inputConfirmGroupName').value.trim();
-
           if (inputVal !== groupName) {
-
             showToast('群組名稱輸入錯誤，刪除已取消', 'danger');
-
             return;
-
-          }
-
-          const { error } = await supabaseClient.from('groups').delete().eq('id', groupId);
-
-          if (error) {
-
-            showToast('刪除群組失敗: ' + error.message, 'danger');
-
-          } else {
-
-            showToast('已成功刪除群組，已切換至個人雲端 DASHBOARD', 'success');
-
-            await switchDashboardContext('personal');
-
           }
 
           closeModal();
 
+          const { error } = await supabaseClient.from('groups').delete().eq('id', groupId);
+          if (error) {
+            showToast('刪除群組失敗: ' + error.message, 'danger');
+          } else {
+            showToast('已成功刪除群組，已切換至個人雲端 DASHBOARD', 'success');
+            await switchDashboardContext('personal');
+          }
         }
-
       });
-
     }
 
-
-
     async function kickGroupMember(groupId, userId, nickname, groupName) {
-
       if (!supabaseClient) return;
 
       openModal({
-
         title: '⚠️ 剔除成員確認',
-
         icon: 'alert-triangle',
-
         contentHtml: `
-
           <div class="text-sm text-[var(--hh-paragraph)]">
-
             確定要將成員 <strong>${escapeHtml(nickname)}</strong> 踢除出群組 <strong>${escapeHtml(groupName)}</strong> 嗎？
-
           </div>
-
         `,
-
         confirmText: '確定踢除',
-
         onConfirm: async () => {
-
-          const { error } = await supabaseClient.from('group_members').delete().eq('group_id', groupId).eq('user_id', userId);
-
-          if (error) {
-
-            showToast('踢除成員失敗: ' + error.message, 'danger');
-
-          } else {
-
-            showToast('已成功踢除成員', 'success');
-
-            await loadUserGroups();
-
-          }
-
           closeModal();
-
+          const { error } = await supabaseClient.from('group_members').delete().eq('group_id', groupId).eq('user_id', userId);
+          if (error) {
+            showToast('踢除成員失敗: ' + error.message, 'danger');
+          } else {
+            showToast('已成功踢除成員', 'success');
+            await loadUserGroups();
+          }
         }
-
       });
-
     }
 
-
-
     async function leaveGroup(groupId, groupName) {
-
       if (!supabaseClient || !currentUser) return;
 
-
-
       const membership = myGroups.find(g => g.id === groupId);
-
       if (!membership) return;
 
-
-
       openModal({
-
         title: '⚠️ 退出群組確認',
-
         icon: 'log-out',
-
         contentHtml: `
-
           <div class="text-sm text-[var(--hh-paragraph)]">
-
             確定要退出群組 <strong>${escapeHtml(groupName)}</strong> 嗎？
-
           </div>
-
         `,
-
         confirmText: '確定退出',
-
         onConfirm: async () => {
-
+          closeModal();
           const isOwner = membership.owner_id === currentUser.id;
 
-
-
           if (isOwner) {
-
             const { data: members, error: memErr } = await supabaseClient
-
               .from('group_members')
-
               .select('*')
-
               .eq('group_id', groupId)
-
               .neq('user_id', currentUser.id)
-
               .order('joined_at', { ascending: true });
 
-
-
             if (memErr) {
-
               showToast('退出群組失敗: 讀取成員錯誤', 'danger');
-
-              closeModal();
-
               return;
-
             }
-
-
 
             if (members && members.length > 0) {
-
               const nextOwner = members[0];
-
               await supabaseClient.from('groups').update({ owner_id: nextOwner.user_id }).eq('id', groupId);
-
               await supabaseClient.from('group_members').update({ role: 'owner' }).eq('group_id', groupId).eq('user_id', nextOwner.user_id);
-
               const { error: delErr } = await supabaseClient.from('group_members').delete().eq('group_id', groupId).eq('user_id', currentUser.id);
-
               if (delErr) {
-
                 showToast('退出群組時發生錯誤', 'danger');
-
               } else {
-
                 showToast('已退出群組，建立者權限已自動移交', 'success');
-
               }
-
             } else {
-
               await supabaseClient.from('groups').delete().eq('id', groupId);
-
               showToast('已退出並自動解散群組', 'success');
-
             }
-
           } else {
-
             const { error: delErr } = await supabaseClient.from('group_members').delete().eq('group_id', groupId).eq('user_id', currentUser.id);
-
             if (delErr) {
-
               showToast('退出群組失敗: ' + delErr.message, 'danger');
-
             } else {
-
               showToast('已成功退出群組', 'success');
-
             }
-
           }
 
-
-
           await switchDashboardContext('personal');
-
-          closeModal();
-
         }
-
       });
 
     }
