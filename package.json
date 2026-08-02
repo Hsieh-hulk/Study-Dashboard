@@ -7,7 +7,8 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "test:e2e": "node e2e_runner.mjs"
   },
   "keywords": [
     "study-dashboard",
@@ -19,6 +20,7 @@
   "devDependencies": {
     "@tailwindcss/postcss": "^4.3.3",
     "autoprefixer": "^10.5.4",
+    "playwright": "^1.62.1",
     "postcss": "^8.5.25",
     "tailwindcss": "^4.3.3",
     "vite": "^8.2.0"

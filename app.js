@@ -6033,9 +6033,22 @@ async function checkSupabaseSession() {
 
       document.getElementById('btnModalCancel').addEventListener('click', closeModal);
 
-      document.getElementById('btnModalConfirm').addEventListener('click', () => {
+      document.getElementById('btnModalConfirm').addEventListener('click', async () => {
 
-        if (modalConfirmCallback) modalConfirmCallback();
+        if (modalConfirmCallback) {
+          const btn = document.getElementById('btnModalConfirm');
+          const originalContent = btn.innerHTML;
+          btn.disabled = true;
+          btn.classList.add('opacity-70', 'cursor-not-allowed');
+          try {
+            const res = modalConfirmCallback();
+            if (res instanceof Promise) await res;
+          } finally {
+            btn.disabled = false;
+            btn.classList.remove('opacity-70', 'cursor-not-allowed');
+            btn.innerHTML = originalContent;
+          }
+        }
 
       });
 
@@ -6045,5 +6058,20 @@ async function checkSupabaseSession() {
 
       });
 
+    });
+
+    Object.assign(window, {
+      promptCreateFolderModal,
+      promptEditFolderModal,
+      promptDeleteFolderModal,
+      promptImportPersonalDataModal,
+      promptAddSubject,
+      promptEditSubject,
+      promptDeleteSubject,
+      promptAddRange,
+      promptEditRange,
+      promptDeleteRange,
+      promptEditLink,
+      promptDeleteLink
     });
 
