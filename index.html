@@ -2685,6 +2685,22 @@ async function checkSupabaseSession() {
 
 
 
+    async function switchDashboardContext(contextId = 'personal') {
+
+      currentDashboardContext = contextId;
+
+      renderDashboardContextOptions();
+
+      await loadUserGroups();
+
+      await loadDashboardData();
+
+      setupRealtimeSubscription();
+
+    }
+
+
+
     // --- Modals for Preset Modes, Profile, Groups & Supabase Config ---
 
 
@@ -3579,17 +3595,9 @@ async function checkSupabaseSession() {
 
           } else {
 
-            showToast('已成功刪除群組', 'success');
+            showToast('已成功刪除群組，已切換至個人雲端 DASHBOARD', 'success');
 
-            if (currentDashboardContext === groupId) {
-
-              await switchDashboardContext('personal');
-
-            } else {
-
-              await loadUserGroups();
-
-            }
+            await switchDashboardContext('personal');
 
           }
 
@@ -3761,15 +3769,7 @@ async function checkSupabaseSession() {
 
 
 
-          if (currentDashboardContext === groupId) {
-
-            await switchDashboardContext('personal');
-
-          } else {
-
-            await loadUserGroups();
-
-          }
+          await switchDashboardContext('personal');
 
           closeModal();
 
