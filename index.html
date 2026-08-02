@@ -865,7 +865,7 @@
 
             <div class="flex items-center gap-1.5">
 
-              <button id="btnImportPersonalData"
+              <button id="btnImportPersonalData" onclick="promptImportPersonalDataModal()"
                 class="hidden hh-btn-secondary px-3 py-1.5 text-xs flex items-center gap-1" title="匯入個人學習資料">
 
                 <i data-lucide="download" class="w-4 h-4"></i>
@@ -4235,16 +4235,35 @@
     // --- Personal Data Import Modal ---
 
     async function promptImportPersonalDataModal() {
+      console.log("promptImportPersonalDataModal called!", {
+        supabaseClient: !!supabaseClient,
+        currentDashboardContext,
+        currentUser: currentUser ? currentUser.id : null,
+        myGroups
+      });
 
-      if (!supabaseClient || currentDashboardContext === 'personal') return;
-
-
+      if (!supabaseClient) {
+        Swal.fire('Error', 'Supabase client not initialized', 'error');
+        return;
+      }
+      if (currentDashboardContext === 'personal') {
+        Swal.fire('Error', '目前在個人模式', 'error');
+        return;
+      }
 
       const currentGroupId = currentDashboardContext;
-
       const groupData = myGroups.find(g => g.id === currentGroupId);
-
-      if (!groupData || groupData.owner_id !== currentUser.id) return;
+      
+      if (!groupData) {
+        Swal.fire('Error', '找不到群組資料', 'error');
+        console.log("myGroups:", myGroups, "currentGroupId:", currentGroupId);
+        return;
+      }
+      
+      if (groupData.owner_id !== currentUser.id) {
+        Swal.fire('Error', '只有群組建立者可以匯入', 'error');
+        return;
+      }
 
 
 
