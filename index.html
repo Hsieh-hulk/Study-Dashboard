@@ -1224,7 +1224,7 @@
         const valB = b.created_at || b.createdAt || '';
         const timeA = valA ? new Date(valA).getTime() : 0;
         const timeB = valB ? new Date(valB).getTime() : 0;
-        return timeA - timeB; // ascending
+        return timeB - timeA; // descending (newest on top)
       });
     }
 
@@ -4096,10 +4096,11 @@ async function checkSupabaseSession() {
         .select('*')
         .eq('user_id', currentUser.id)
         .is('group_id', null)
-        .order('created_at', { ascending: true });
+        .order('created_at', { ascending: false });
 
       // 過濾掉內部使用的 ___FOLDER_META___ 特殊紀錄
-      const pSubjects = (rawSubjects || []).filter(s => s.name !== '___FOLDER_META___');
+      let pSubjects = (rawSubjects || []).filter(s => s.name !== '___FOLDER_META___');
+      pSubjects = sortItems(pSubjects, 'subjects');
 
       if (subErr || !pSubjects || pSubjects.length === 0) {
         Swal.fire('無資料', '您的個人雲端目前沒有任何科目可以匯入。', 'info');
@@ -4120,7 +4121,7 @@ async function checkSupabaseSession() {
 
         .in('subject_id', subIds)
         
-        .order('created_at', { ascending: true });
+        .order('created_at', { ascending: false });
 
 
 
@@ -4134,7 +4135,7 @@ async function checkSupabaseSession() {
 
         .in('range_id', rangeIds.length > 0 ? rangeIds : ['00000000-0000-0000-0000-000000000000']) // Fallback to avoid empty array error
         
-        .order('created_at', { ascending: true });
+        .order('created_at', { ascending: false });
 
 
 
