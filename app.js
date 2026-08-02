@@ -172,8 +172,11 @@ import './styles.css';
             if (typeof val === 'function' && Array.isArray(obj)) {
                return function(...args) {
                    const result = Array.prototype[prop].apply(obj, args);
-                   const rootProp = path.length > 0 ? path[0] : prop;
-                   self.notify(rootProp, self.state[rootProp]);
+                   const mutatingMethods = ['push', 'pop', 'shift', 'unshift', 'splice', 'sort', 'reverse'];
+                   if (mutatingMethods.includes(prop)) {
+                       const rootProp = path.length > 0 ? path[0] : prop;
+                       self.notify(rootProp, self.state[rootProp]);
+                   }
                    return result;
                }
             }
@@ -1228,9 +1231,18 @@ async function checkSupabaseSession() {
 
 
     function generateNumericInviteCode() {
-
-      return Math.floor(100000 + Math.random() * 900000).toString();
-
+      let code;
+      let attempts = 0;
+      do {
+        code = Math.floor(100000 + Math.random() * 900000).toString();
+        attempts++;
+      } while (
+        attempts < 50 &&
+        globalStore.state.myGroups &&
+        Array.isArray(globalStore.state.myGroups) &&
+        globalStore.state.myGroups.some(g => g && g.invite_code === code)
+      );
+      return code;
     }
 
 
@@ -2090,52 +2102,61 @@ async function checkSupabaseSession() {
 
 
           if (supabaseClient && globalStore.state.currentUser) {
+            let currentInviteCode = invite_code;
+            let createdGroup = null;
+            let attempts = 0;
+            let lastError = null;
 
-            const { data, error } = await supabaseClient.from('groups').insert({
+            while (!createdGroup && attempts < 5) {
+              attempts++;
+              const { data, error } = await supabaseClient.from('groups').insert({
+                name,
+                invite_code: currentInviteCode,
+                owner_id: globalStore.state.currentUser.id
+              }).select().single();
 
-              name,
+              if (error) {
+                lastError = error;
+                if (error.code === '23505' || (error.message && (error.message.includes('groups_invite_code_key') || error.message.includes('duplicate key')))) {
+                  currentInviteCode = generateNumericInviteCode();
+                  continue;
+                }
+                showToast('建立失敗: ' + error.message, 'danger');
+                return;
+              }
+              createdGroup = data;
+            }
 
-              invite_code,
-
-              owner_id: globalStore.state.currentUser.id
-
-            }).select().single();
-
-
-
-            if (error) {
-
-              showToast('建立失敗: ' + error.message, 'danger');
-
+            if (!createdGroup) {
+              showToast('建立失敗: ' + (lastError ? lastError.message : '無法產生唯一的群組邀請碼'), 'danger');
               return;
-
             }
 
             await supabaseClient.from('group_members').insert({
-
-              group_id: data.id,
-
+              group_id: createdGroup.id,
               user_id: globalStore.state.currentUser.id,
-
               role: 'owner'
-
             });
 
-            globalStore.state.myGroups = [...globalStore.state.myGroups, data];
+            globalStore.state.myGroups = [...globalStore.state.myGroups, createdGroup];
             closeModal();
-            showToast(`成功建立群組「${name}」 (邀請碼: ${invite_code})`, 'success');
-            await switchDashboardContext(data.id);
+            showToast(`成功建立群組「${name}」 (邀請碼: ${createdGroup.invite_code})`, 'success');
+            await switchDashboardContext(createdGroup.id);
           } else {
+            let currentInviteCode = invite_code;
+            if (globalStore.state.myGroups && globalStore.state.myGroups.some(g => g && g.invite_code === currentInviteCode)) {
+              currentInviteCode = generateNumericInviteCode();
+            }
             const newGroup = {
               id: generateId('grp'),
               name,
-              invite_code,
+              invite_code: currentInviteCode,
               owner_id: 'local_owner',
               created_at: new Date().toISOString()
             };
             globalStore.state.myGroups = [...globalStore.state.myGroups, newGroup];
             closeModal();
-            showToast(`成功建立群組「${name}」 (邀請碼: ${invite_code})`, 'success');
+            showToast(`成功建立群組「${name}」 (邀請碼: ${currentInviteCode})`, 'success');
             await switchDashboardContext(newGroup.id);
           }
 
@@ -3773,7 +3794,7 @@ async function checkSupabaseSession() {
 
 
 
-          if (supabaseClient) {
+          if (supabaseClient && globalStore.state.currentUser) {
 
             let delQuery = supabaseClient.from('subjects').delete().eq('preset_mode', activeFolder.id);
 
