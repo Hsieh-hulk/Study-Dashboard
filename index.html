@@ -80,6 +80,10 @@
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
+  <!-- SweetAlert2 CDN -->
+
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
 
 
   <style>
@@ -4357,7 +4361,7 @@
 
                   <div class="flex-1">
 
-                    <div class="font-bold text-sm text-[var(--hh-headline)]">${escapeHTML(s.name)}</div>
+                    <div class="font-bold text-sm text-[var(--hh-headline)]">${escapeHtml(s.name)}</div>
 
                     <div class="text-[10px] text-[var(--hh-paragraph)] opacity-70">包含 ${rCount} 個單元範圍</div>
 
