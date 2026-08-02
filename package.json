@@ -1,11 +1,13 @@
 {
   "name": "study-dashboard",
+  "type": "module",
   "version": "1.0.0",
   "description": "Happy Hues Edition + Supabase Study Dashboard",
   "main": "server.js",
   "scripts": {
-    "start": "node server.js",
-    "dev": "node server.js"
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
   },
   "keywords": [
     "study-dashboard",
@@ -13,5 +15,12 @@
     "happy-hues"
   ],
   "author": "",
-  "license": "ISC"
+  "license": "ISC",
+  "devDependencies": {
+    "@tailwindcss/postcss": "^4.3.3",
+    "autoprefixer": "^10.5.4",
+    "postcss": "^8.5.25",
+    "tailwindcss": "^4.3.3",
+    "vite": "^8.2.0"
+  }
 }

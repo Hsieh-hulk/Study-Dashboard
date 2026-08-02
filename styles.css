@@ -1,0 +1,637 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+    /* --- HAPPY HUES & STUDY FOCUS DESIGN SYSTEM THEMES --- */
+
+
+
+    /* 1. Focus Sage Green (🌿 舒緩森林 - 沉穩耐看，大幅降低眼睛疲勞感) */
+
+    :root[data-theme="sage"] {
+
+      --hh-bg: #f1f5f2;
+
+      --hh-headline: #1b382b;
+
+      --hh-paragraph: #2d4c3e;
+
+      --hh-card: #ffffff;
+
+      --hh-card-border: #1b382b;
+
+      --hh-card-hover-border: #52796f;
+
+      --hh-btn-main: #52796f;
+
+      --hh-btn-main-hover: #354f52;
+
+      --hh-btn-text: #ffffff;
+
+      --hh-accent-blush: #cad2c5;
+
+      --hh-accent-ice: #e8f0ec;
+
+      --hh-accent-teal: #84a59d;
+
+      --hh-shadow: #1b382b;
+
+      --hh-badge-bg: #e8f0ec;
+
+      --hh-badge-text: #1b382b;
+
+      --hh-input-bg: #ffffff;
+
+    }
+
+
+
+    /* 2. Soft Dusk Dark Mode (🌙 柔和夜讀 - 晚間低藍光防刺眼暗色調) */
+
+    :root[data-theme="dusk"] {
+
+      --hh-bg: #1a1c23;
+
+      --hh-headline: #f0f2f5;
+
+      --hh-paragraph: #94a3b8;
+
+      --hh-card: #222530;
+
+      --hh-card-border: #4a5568;
+
+      --hh-card-hover-border: #dd6b20;
+
+      --hh-btn-main: #dd6b20;
+
+      --hh-btn-main-hover: #c05621;
+
+      --hh-btn-text: #ffffff;
+
+      --hh-accent-blush: #2d3748;
+
+      --hh-accent-ice: #2d3748;
+
+      --hh-accent-teal: #718096;
+
+      --hh-shadow: #111318;
+
+      --hh-badge-bg: #2d3748;
+
+      --hh-badge-text: #ed8936;
+
+      --hh-input-bg: #1a1c23;
+
+    }
+
+
+
+    /* 3. Pure Light (☀️ 極簡明亮 - 清新極簡高對比) */
+
+    :root[data-theme="light"] {
+
+      --hh-bg: #f8fafc;
+
+      --hh-headline: #0f172a;
+
+      --hh-paragraph: #334155;
+
+      --hh-card: #ffffff;
+
+      --hh-card-border: #cbd5e1;
+
+      --hh-card-hover-border: #3b82f6;
+
+      --hh-btn-main: #3b82f6;
+
+      --hh-btn-main-hover: #2563eb;
+
+      --hh-btn-text: #ffffff;
+
+      --hh-accent-blush: #e2e8f0;
+
+      --hh-accent-ice: #f1f5f9;
+
+      --hh-accent-teal: #94a3b8;
+
+      --hh-shadow: #94a3b8;
+
+      --hh-badge-bg: #e2e8f0;
+
+      --hh-badge-text: #1e40af;
+
+      --hh-input-bg: #ffffff;
+
+    }
+
+
+
+
+
+
+
+    /* Base Body Applying Happy Hues Palette */
+
+    body {
+
+      background-color: var(--hh-bg);
+
+      color: var(--hh-paragraph);
+
+      font-family: 'Plus Jakarta Sans', 'Noto Sans TC', sans-serif;
+
+      transition: background-color 0.3s ease, color 0.3s ease;
+
+    }
+
+
+
+    /* Dynamic Custom Scrollbar */
+
+    ::-webkit-scrollbar {
+
+      width: 6px;
+
+      height: 6px;
+
+    }
+
+
+
+    ::-webkit-scrollbar-track {
+
+      background: transparent;
+
+    }
+
+
+
+    ::-webkit-scrollbar-thumb {
+
+      background: var(--hh-card-border);
+
+      border-radius: 9999px;
+
+      opacity: 0.5;
+
+    }
+
+
+
+    /* Happy Hues Neo-Tactile Box Shadows & Borders */
+
+    .hh-card {
+
+      background-color: var(--hh-card);
+
+      border: 2.5px solid var(--hh-card-border);
+
+      box-shadow: 4px 4px 0px 0px var(--hh-shadow);
+
+      border-radius: 16px;
+
+      transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+
+    }
+
+
+
+    .hh-card:hover {
+
+      transform: translateY(-2px);
+
+      box-shadow: 6px 6px 0px 0px var(--hh-shadow);
+
+      border-color: var(--hh-card-hover-border);
+
+    }
+
+
+
+    .hh-card-active {
+
+      background-color: var(--hh-accent-ice);
+
+      border-color: var(--hh-card-border);
+
+      box-shadow: 4px 4px 0px 0px var(--hh-shadow);
+
+    }
+
+
+
+    .hh-btn-primary {
+
+      background-color: var(--hh-btn-main);
+
+      color: var(--hh-btn-text);
+
+      border: 2px solid var(--hh-card-border);
+
+      box-shadow: 3px 3px 0px 0px var(--hh-shadow);
+
+      font-weight: 700;
+
+      border-radius: 12px;
+
+      min-height: 44px;
+
+      transition: all 0.15s ease;
+
+    }
+
+
+
+    .hh-btn-primary:hover {
+
+      background-color: var(--hh-btn-main-hover);
+
+      transform: translate(-1px, -1px);
+
+      box-shadow: 4px 4px 0px 0px var(--hh-shadow);
+
+    }
+
+
+
+    .hh-btn-primary:active {
+
+      transform: translate(2px, 2px);
+
+      box-shadow: 1px 1px 0px 0px var(--hh-shadow);
+
+    }
+
+
+
+    /* Custom Radio Dot & Preset Option Card Styling */
+
+    .preset-mode-card {
+
+      background-color: var(--hh-card);
+
+      border: 2.5px solid var(--hh-card-border);
+
+      box-shadow: 3px 3px 0px 0px var(--hh-shadow);
+
+      border-radius: 14px;
+
+      padding: 0.75rem 0.85rem;
+
+      cursor: pointer;
+
+      display: flex;
+
+      flex-direction: column;
+
+      justify-content: space-between;
+
+      transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+
+    }
+
+
+
+    .preset-mode-card:hover {
+
+      border-color: var(--hh-btn-main);
+
+      transform: translateY(-2px);
+
+      box-shadow: 4px 4px 0px 0px var(--hh-shadow);
+
+    }
+
+
+
+    .preset-mode-card:has(input[type="radio"]:checked) {
+
+      border-color: var(--hh-btn-main);
+
+      background-color: var(--hh-accent-ice);
+
+      box-shadow: 0 0 0 2px var(--hh-btn-main), 3px 3px 0px 0px var(--hh-shadow);
+
+    }
+
+
+
+    .preset-radio-dot {
+
+      appearance: none;
+
+      -webkit-appearance: none;
+
+      width: 1.25rem;
+
+      height: 1.25rem;
+
+      border: 2px solid var(--hh-card-border);
+
+      border-radius: 50%;
+
+      outline: none;
+
+      display: grid;
+
+      place-content: center;
+
+      background-color: var(--hh-card);
+
+      transition: all 0.15s ease-in-out;
+
+      cursor: pointer;
+
+      flex-shrink: 0;
+
+      margin: 0;
+
+    }
+
+
+
+    .preset-radio-dot::before {
+
+      content: "";
+
+      width: 0.65rem;
+
+      height: 0.65rem;
+
+      border-radius: 50%;
+
+      transform: scale(0);
+
+      transition: 0.15s transform ease-in-out;
+
+      background-color: var(--hh-btn-main);
+
+    }
+
+
+
+    .preset-radio-dot:checked {
+
+      border-color: var(--hh-btn-main);
+
+      border-width: 2.5px;
+
+      background-color: var(--hh-card);
+
+    }
+
+
+
+    .preset-radio-dot:checked::before {
+
+      transform: scale(1);
+
+    }
+
+
+
+    .hh-btn-secondary {
+
+      background-color: var(--hh-card);
+
+      color: var(--hh-headline);
+
+      border: 2px solid var(--hh-card-border);
+
+      box-shadow: 3px 3px 0px 0px var(--hh-shadow);
+
+      font-weight: 600;
+
+      border-radius: 12px;
+
+      min-height: 44px;
+
+      transition: all 0.15s ease;
+
+    }
+
+
+
+    .hh-btn-secondary:hover {
+
+      background-color: var(--hh-accent-ice);
+
+      transform: translate(-1px, -1px);
+
+      box-shadow: 4px 4px 0px 0px var(--hh-shadow);
+
+    }
+
+
+
+    .hh-btn-secondary:active {
+
+      transform: translate(2px, 2px);
+
+      box-shadow: 1px 1px 0px 0px var(--hh-shadow);
+
+    }
+
+
+
+    .hh-input {
+
+      background-color: var(--hh-input-bg);
+
+      border: 2px solid var(--hh-card-border);
+
+      color: var(--hh-headline);
+
+      border-radius: 10px;
+
+      min-height: 44px;
+
+      box-shadow: inset 2px 2px 0px rgba(0, 0, 0, 0.05);
+
+    }
+
+
+
+    .hh-input:focus {
+      outline: none;
+      border-color: var(--hh-btn-main);
+      box-shadow: 0 0 0 3px rgba(255, 216, 3, 0.3);
+    }
+
+    .hh-input::placeholder {
+      color: var(--hh-paragraph);
+      opacity: 0.55;
+      font-weight: 600;
+      letter-spacing: normal;
+    }
+
+    #inputJoinCode::placeholder {
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
+      font-size: 0.875rem;
+      font-weight: 600;
+      letter-spacing: normal;
+      opacity: 0.55;
+    }
+
+
+
+
+    .hh-headline {
+
+      color: var(--hh-headline);
+
+    }
+
+
+
+    .hh-badge {
+
+      background-color: var(--hh-badge-bg);
+
+      color: var(--hh-badge-text);
+
+      border: 1.5px solid var(--hh-card-border);
+
+      font-weight: 700;
+
+    }
+
+
+
+    /* Keyframe Animations */
+
+    @keyframes popIn {
+
+      0% {
+
+        transform: scale(0.96);
+
+        opacity: 0;
+
+      }
+
+
+
+      100% {
+
+        transform: scale(1);
+
+        opacity: 1;
+
+      }
+
+    }
+
+
+
+    .animate-pop-in {
+
+      animation: popIn 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+
+    }
+
+
+
+    @keyframes pulseHighlight {
+
+      0% {
+
+        box-shadow: 0 0 0 4px rgba(255, 216, 3, 0.9), 4px 4px 0px 0px var(--hh-shadow);
+
+        transform: scale(1.02);
+
+      }
+
+
+
+      50% {
+
+        box-shadow: 0 0 0 8px rgba(255, 216, 3, 0.6), 6px 6px 0px 0px var(--hh-shadow);
+
+        transform: scale(1.03);
+
+      }
+
+
+
+      100% {
+
+        box-shadow: 4px 4px 0px 0px var(--hh-shadow);
+
+        transform: scale(1);
+
+      }
+
+    }
+
+
+
+    .animate-pulse-highlight {
+
+      animation: pulseHighlight 1.2s ease-in-out forwards;
+
+    }
+
+    /* SweetAlert2 Happy Hues Overrides */
+    .swal2-popup {
+      background-color: var(--hh-card) !important;
+      border: 2.5px solid var(--hh-card-border) !important;
+      box-shadow: 4px 4px 0px 0px var(--hh-shadow) !important;
+      border-radius: 16px !important;
+      color: var(--hh-headline) !important;
+    }
+
+    .swal2-title {
+      color: var(--hh-headline) !important;
+      font-weight: 800 !important;
+    }
+
+    .swal2-html-container, .swal2-content {
+      color: var(--hh-paragraph) !important;
+      font-weight: 600 !important;
+    }
+
+    .swal2-confirm {
+      background-color: var(--hh-btn-main) !important;
+      color: var(--hh-btn-text) !important;
+      border: 2px solid var(--hh-card-border) !important;
+      box-shadow: 3px 3px 0px 0px var(--hh-shadow) !important;
+      border-radius: 12px !important;
+      font-weight: 700 !important;
+      transition: all 0.15s !important;
+    }
+
+    .swal2-confirm:hover {
+      background-color: var(--hh-btn-main-hover) !important;
+      box-shadow: 4px 4px 0px 0px var(--hh-shadow) !important;
+      transform: translate(-1px, -1px) !important;
+    }
+
+    .swal2-cancel {
+      background-color: var(--hh-card) !important;
+      color: var(--hh-headline) !important;
+      border: 2px solid var(--hh-card-border) !important;
+      box-shadow: 3px 3px 0px 0px var(--hh-shadow) !important;
+      border-radius: 12px !important;
+      font-weight: 600 !important;
+      transition: all 0.15s !important;
+    }
+
+    .swal2-cancel:hover {
+      background-color: var(--hh-accent-ice) !important;
+      box-shadow: 4px 4px 0px 0px var(--hh-shadow) !important;
+      transform: translate(-1px, -1px) !important;
+    }
+
+    /* Skeleton Loading */
+    @keyframes skeletonPulse {
+      0% { opacity: 0.5; }
+      50% { opacity: 1; }
+      100% { opacity: 0.5; }
+    }
+
+    .skeleton-box {
+      background-color: var(--hh-accent-ice);
+      border-radius: 12px;
+      animation: skeletonPulse 1.5s ease-in-out infinite;
+    }

@@ -66,8 +66,12 @@
 2. 填入 GCP Console 取得的 `Client ID` 與 `Client Secret`。
 3. 將 Redirect URL 新增至 GCP OAuth 允許的重定向網址中。
 
-### 步驟三：於 Study Dashboard 連線
-點擊網頁右上角的 ⚙️ 按鈕（或登入選單中的「Supabase 連線設定」），輸入您的 **Project URL** 與 **Anon Public Key** 即可開啟雲端同步！
+### 步驟三：設定環境變數 (.env)
+在專案根目錄建立 `.env` 檔案，寫入你的 Supabase 金鑰，打包後即可讓使用者無縫使用雲端功能：
+```env
+VITE_SUPABASE_URL=你的_Project_URL
+VITE_SUPABASE_ANON_KEY=你的_Anon_Public_Key
+```
 
 ---
 
