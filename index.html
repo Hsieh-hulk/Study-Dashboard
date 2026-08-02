@@ -1517,137 +1517,83 @@
 
     // --- Supabase Client & Cloud Sync Engine ---
 
-
+    function cleanUrlOAuthParams() {
+      if (window.location.hash || window.location.search) {
+        const cleanUrl = window.location.origin + window.location.pathname;
+        window.history.replaceState(null, '', cleanUrl);
+      }
+    }
 
     function initSupabase() {
-
       try {
-
         let url = DEFAULT_SUPABASE_URL;
-
         let key = DEFAULT_SUPABASE_KEY;
 
-
-
         const storedCfg = localStorage.getItem(SUPABASE_CONFIG_KEY);
-
         if (storedCfg) {
-
           const parsed = JSON.parse(storedCfg);
-
           if (parsed && parsed.url && parsed.key) {
-
             url = parsed.url;
-
             key = parsed.key;
-
           }
-
         }
-
-
 
         if (url && key && typeof supabase !== 'undefined') {
+      url = url.replace(/\/rest\/v1\/?$/, '').replace(/\/+$/, '');
+      supabaseClient = supabase.createClient(url, key);
+      checkSupabaseSession();
 
-          url = url.replace(/\/rest\/v1\/?$/, '').replace(/\/+$/, '');
-
-          supabaseClient = supabase.createClient(url, key);
-
+      supabaseClient.auth.onAuthStateChange((event, session) => {
+        if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
           checkSupabaseSession();
-
-
-
-          supabaseClient.auth.onAuthStateChange((event, session) => {
-
-            if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
-
-              checkSupabaseSession();
-
-            } else if (event === 'SIGNED_OUT') {
-
-              currentUser = null;
-
-              myGroups = [];
-
-              currentDashboardContext = 'personal';
-
-              renderAuthPill();
-
-              renderDashboardContextOptions();
-
-              loadState();
-
-              renderAll();
-
-            }
-
-          });
-
-          return;
-
-        }
-
-      } catch (err) {
-
-        console.warn('Supabase config not set or invalid:', err);
-
-      }
-
-      renderAuthPill();
-
-    }
-
-
-
-    async function checkSupabaseSession() {
-
-      if (!supabaseClient) {
-
-        loadState();
-
-        renderAll();
-
-        return;
-
-      }
-
-      try {
-
-        const { data: { session } } = await supabaseClient.auth.getSession();
-
-        if (session && session.user) {
-
-          await loadUserProfile(session.user);
-
-          await loadUserGroups();
-
-          await loadDashboardData();
-
-          setupRealtimeSubscription();
-
-        } else {
-
+        } else if (event === 'SIGNED_OUT') {
+          cleanUrlOAuthParams();
           currentUser = null;
-
+          myGroups = [];
+          currentDashboardContext = 'personal';
+          renderAuthPill();
+          renderDashboardContextOptions();
           loadState();
-
           renderAll();
-
         }
-
-      } catch (err) {
-
-        console.error('Failed to get session', err);
-
-        loadState();
-
-        renderAll();
-
-      }
-
-      renderAuthPill();
-
+      });
+      return;
     }
+  } catch (err) {
+    console.warn('Supabase config not set or invalid:', err);
+  }
+  renderAuthPill();
+}
+
+async function checkSupabaseSession() {
+  if (!supabaseClient) {
+    loadState();
+    renderAll();
+    return;
+  }
+
+  try {
+    const { data: { session } } = await supabaseClient.auth.getSession();
+
+    if (session && session.user) {
+      cleanUrlOAuthParams();
+      await loadUserProfile(session.user);
+      await loadUserGroups();
+      await loadDashboardData();
+      setupRealtimeSubscription();
+    } else {
+      currentUser = null;
+      loadState();
+      renderAll();
+    }
+  } catch (err) {
+    console.error('Failed to get session', err);
+    loadState();
+    renderAll();
+  }
+
+  renderAuthPill();
+}
 
 
 
@@ -2237,56 +2183,50 @@
 
 
 
-    function handleGoogleLogin() {
-
+    async function handleGoogleLogin() {
       if (!supabaseClient) {
-
         promptSupabaseConfigModal();
-
         return;
-
       }
 
-      supabaseClient.auth.signInWithOAuth({
+      // 確保 redirectTo 乾淨，不包含舊的 OAuth Hash (#access_token=...) 或 Search 參數
+      const redirectUrl = window.location.origin + window.location.pathname;
 
-        provider: 'google',
+      try {
+        const { data, error } = await supabaseClient.auth.signInWithOAuth({
+          provider: 'google',
+          options: { redirectTo: redirectUrl }
+        });
 
-        options: { redirectTo: window.location.href }
-
-      }).catch(err => {
-
-        showToast('Google 登入連線失敗: ' + err.message, 'danger');
-
-      });
-
+        if (error) {
+          showToast('Google 登入連線失敗: ' + error.message, 'danger');
+        }
+      } catch (err) {
+        showToast('Google 登入發生異常: ' + err.message, 'danger');
+      }
     }
 
-
-
     async function handleLogout() {
-
       if (supabaseClient) {
-
-        await supabaseClient.auth.signOut();
-
+        try {
+          await supabaseClient.auth.signOut();
+        } catch (err) {
+          console.warn('SignOut error:', err);
+        }
       }
 
+      cleanUrlOAuthParams();
+
       currentUser = null;
-
       myGroups = [];
-
       currentDashboardContext = 'personal';
 
       renderAuthPill();
-
       renderDashboardContextOptions();
-
       loadState();
-
       renderAll();
 
       showToast('已安全登出', 'info');
-
     }
 
 
