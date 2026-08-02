@@ -1506,190 +1506,99 @@ async function checkSupabaseSession() {
 
       try {
 
-        let query = supabaseClient.from('subjects').select('*, ranges(*, resource_links(*, creator:profiles!resource_links_created_by_fkey(nickname, avatar_url), editor:profiles!fk_resource_links_last_editor(nickname, avatar_url)))');
-
-
+        let query = supabaseClient.from('subjects').select('*, ranges(*, resource_links(*, creator:profiles!resource_links_created_by_fkey(nickname, avatar_url), editor:profiles!fk_resource_links_last_editor(nickname, avatar_url)))').order('created_at', { ascending: true });
 
         if (currentDashboardContext === 'personal') {
-
           const activeFolder = getActiveFolder();
-
           if (!activeFolder) {
-
             state.folders = [];
-
             renderAll();
-
             return;
-
           }
-
           query = query.eq('user_id', currentUser.id).is('group_id', null).eq('preset_mode', activeFolder.id);
-
         } else {
-
           query = query.eq('group_id', currentDashboardContext);
-
         }
 
-
-
         let { data, error } = await query;
-
         if (error) throw error;
 
-
-
         if (currentDashboardContext !== 'personal') {
-
           if (!state.groupFolders) state.groupFolders = {};
-
           if (!state.groupFolders[currentDashboardContext]) {
-
             state.groupFolders[currentDashboardContext] = { folders: [], activeFolderId: null };
-
           }
-
-
 
           let parsedFoldersMap = new Map();
-
           let parsedSubjects = [];
 
-
-
           // Parse folders from meta subjects or infer from normal subjects
-
           (data || []).forEach(sub => {
-
             if (sub.name === '___FOLDER_META___') {
-
               const parts = (sub.preset_mode || '').split('|');
-
               if (parts.length >= 3) {
-
                 const fId = parts[0];
-
                 const fName = parts[1];
-
                 const fMode = parts[2];
-
                 if (!parsedFoldersMap.has(fId)) {
-
                   parsedFoldersMap.set(fId, { id: fId, name: fName, preset_mode: fMode, subjects: [] });
-
                 }
-
               }
-
             } else {
-
               parsedSubjects.push(sub);
-
             }
-
           });
-
-
 
           // Re-construct loaded subjects
-
           const loadedSubs = parsedSubjects.map(sub => ({
-
             id: sub.id,
-
             name: sub.name,
-
             user_id: sub.user_id,
-
             group_id: sub.group_id,
-
             preset_mode: sub.preset_mode,
-
+            created_at: sub.created_at,
             ranges: (sub.ranges || []).map(rng => ({
-
-              id: rng.id, name: rng.name, subject_id: rng.subject_id,
-
+              id: rng.id, name: rng.name, subject_id: rng.subject_id, created_at: rng.created_at,
               links: (rng.resource_links || []).map(lnk => ({
-
-                id: lnk.id, title: lnk.title, url: lnk.url, range_id: lnk.range_id, created_by: lnk.created_by,
-
+                id: lnk.id, title: lnk.title, url: lnk.url, range_id: lnk.range_id, created_at: lnk.created_at, created_by: lnk.created_by,
                 last_edited_by: lnk.last_edited_by, last_edited_at: lnk.last_edited_at, editor: lnk.editor || null, creator: lnk.creator || null
-
               }))
-
             }))
-
           }));
 
-
-
           // Assign subjects to folders based on preset_mode (which stores folder id)
-
           loadedSubs.forEach(sub => {
-
             const fId = sub.preset_mode;
-
             if (fId) {
-
               if (!parsedFoldersMap.has(fId)) {
-
                 // Infer folder if meta was missing for some reason
-
                 parsedFoldersMap.set(fId, { id: fId, name: '未命名專案', preset_mode: 'blank', subjects: [] });
-
               }
-
               parsedFoldersMap.get(fId).subjects.push(sub);
-
             }
-
           });
 
-
-
           // Restore local active folder id if valid
-
           let newFolders = Array.from(parsedFoldersMap.values());
-
           const oldActiveId = state.groupFolders[currentDashboardContext].activeFolderId;
 
-
-
           state.groupFolders[currentDashboardContext].folders = newFolders;
-
           if (newFolders.length > 0 && (!oldActiveId || !newFolders.find(f => f.id === oldActiveId))) {
-
             state.groupFolders[currentDashboardContext].activeFolderId = newFolders[0].id;
-
           }
-
           state.subjects = []; // Group mode subjects now live in the folder
-
         } else {
-
           // Personal Mode processing
-
           if (data && data.length > 0) {
-
             const loadedSubs = data.map(sub => ({
-
-              id: sub.id, name: sub.name, user_id: sub.user_id, group_id: sub.group_id, preset_mode: sub.preset_mode,
-
+              id: sub.id, name: sub.name, user_id: sub.user_id, group_id: sub.group_id, preset_mode: sub.preset_mode, created_at: sub.created_at,
               ranges: (sub.ranges || []).map(rng => ({
-
-                id: rng.id, name: rng.name, subject_id: rng.subject_id,
-
+                id: rng.id, name: rng.name, subject_id: rng.subject_id, created_at: rng.created_at,
                 links: (rng.resource_links || []).map(lnk => ({
-
-                  id: lnk.id, title: lnk.title, url: lnk.url, range_id: lnk.range_id, created_by: lnk.created_by,
-
+                  id: lnk.id, title: lnk.title, url: lnk.url, range_id: lnk.range_id, created_at: lnk.created_at, created_by: lnk.created_by,
                   last_edited_by: lnk.last_edited_by, last_edited_at: lnk.last_edited_at, editor: lnk.editor || null, creator: lnk.creator || null
-
                 }))
-
               }))
-
             }));
 
             const activeFolder = getActiveFolder();
